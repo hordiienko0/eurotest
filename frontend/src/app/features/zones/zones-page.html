@@ -1,0 +1,55 @@
+<main style="padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-8);box-sizing:border-box;width:100%;max-width:1440px">
+  <div>
+    <div class="kicker">Усі зони</div>
+    <div class="title-xl">Зони зберігання</div>
+  </div>
+
+  @if (data(); as d) {
+    <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+      <div style="padding:var(--space-4) var(--space-4) var(--space-4) 0"><div class="stat-n">{{ d.totals.ownUsed }} / {{ d.totals.ownCap }}</div><div style="font-size:14px">власні зони · вільно {{ d.totals.ownCap - d.totals.ownUsed }}</div></div>
+      <div style="padding:var(--space-4)"><div class="stat-n">{{ d.totals.extUsed }} / {{ d.totals.extCap }}</div><div style="font-size:14px">партнери й дилери</div></div>
+      <div style="padding:var(--space-4)"><div class="stat-n">{{ d.totals.online }} / {{ d.totals.extCount }}</div><div style="font-size:14px">зовнішніх складів на зв’язку</div></div>
+      <div style="padding:var(--space-4)"><div class="stat-n">{{ d.totals.ops }}</div><div style="font-size:14px">переміщень у журналі</div></div>
+    </div>
+
+    @for (g of d.groups; track g.code) {
+      <section style="display:flex;flex-direction:column;gap:var(--space-2)">
+        <div style="display:flex;align-items:baseline;gap:var(--space-4);border-bottom:2px solid var(--color-text);padding-bottom:var(--space-2);flex-wrap:wrap">
+          <span style="font-size:20px;font-weight:800;color:var(--color-accent-500)">{{ g.code }}</span>
+          <span style="font-size:20px;font-weight:800;flex:1 1 auto">{{ g.name }}</span>
+          <span class="tnum" style="font-size:14px">{{ summary(g) }}</span>
+          @if (g.editable) {
+            <button class="btn btn-secondary" (click)="add(g)">+ Додати</button>
+          }
+        </div>
+        <div style="display:flex;flex-direction:column">
+          @for (z of g.zones; track z.code) {
+            <div class="row-line" style="gap:var(--space-2) var(--space-4);padding:var(--space-3) 0">
+              <div style="flex:1 1 200px;min-width:0;display:flex;gap:var(--space-3);align-items:baseline"><b style="min-width:36px">{{ z.code }}</b><span>{{ z.name }}</span></div>
+              <div style="flex:0 0 auto"><span [class]="'tag ' + PRI_CLASS[z.priority]">{{ PRI_LABEL[z.priority] }}</span></div>
+              <div style="flex:1 1 180px;display:flex;gap:var(--space-3);align-items:center">
+                <div style="flex:1;height:8px;background:var(--color-neutral-200)"><div style="height:100%;background:var(--color-accent)" [style.width.%]="pct(z)"></div></div>
+                <span class="tnum" style="font-size:13px;white-space:nowrap">{{ z.used }} / {{ z.capacity }} · вільн. <b>{{ free(z) }}</b></span>
+              </div>
+              <div style="flex:0 1 150px;font-size:13px" [style.color]="infoColor(z)">{{ info(z) }}</div>
+              <div style="display:flex;gap:var(--space-2);margin-left:auto;flex-shrink:0">
+                @if (z.editable) {
+                  <button class="btn btn-ghost" style="min-height:44px;white-space:nowrap" (click)="edit(z)">Змінити</button>
+                }
+                <button class="btn btn-secondary" style="min-height:44px;white-space:nowrap" (click)="open(z)">Відкрити →</button>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <div><button class="btn btn-ghost" (click)="resetDemo()">Скинути демо-дані</button></div>
+  } @else {
+    <div style="font-size:15px">Завантаження…</div>
+  }
+</main>
+
+@if (dialog(); as s) {
+  <app-zone-dialog [state]="s" (saved)="onSaved()" (closed)="dialog.set(null)" />
+}

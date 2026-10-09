@@ -1,0 +1,44 @@
+<div class="dialog-backdrop" style="z-index:50">
+  <div class="dialog" style="width:min(480px,100%);background:var(--color-bg);border:2px solid var(--color-text)">
+    <div class="dialog-title">{{ title() }}</div>
+    @if (state().mode === 'create') {
+      <div class="field" style="margin:0">
+        <label>Тип</label>
+        <div class="seg">
+          <label class="seg-opt"><input type="radio" name="dlg-type" [checked]="groupCode() === '3.2'" (change)="groupCode.set('3.2')">Тимчасовий майданчик</label>
+          <label class="seg-opt"><input type="radio" name="dlg-type" [checked]="groupCode() === '3.3'" (change)="groupCode.set('3.3')">Транзитна зона</label>
+        </div>
+      </div>
+    }
+    <div class="field" style="margin:0">
+      <label>Назва</label>
+      <input class="input" [value]="name()" (input)="name.set(val($event))" placeholder="Поле за терміналом" style="width:100%;box-sizing:border-box">
+    </div>
+    <div class="field" style="margin:0">
+      <label>Площа, м²</label>
+      <input class="input" type="number" min="25" step="25" [value]="area()" (input)="area.set(+val($event))" style="width:100%;box-sizing:border-box">
+    </div>
+    <div class="field" style="margin:0">
+      <label>Пріоритет</label>
+      <div class="seg">
+        @for (p of pris; track p.value) {
+          <label class="seg-opt"><input type="radio" name="dlg-pri" [checked]="priority() === p.value" (change)="priority.set(p.value)">{{ p.label }}</label>
+        }
+      </div>
+    </div>
+    <div style="font-size:15px;border-top:2px solid var(--color-text);padding-top:var(--space-3)">
+      Місткість: <b>{{ cap() }}</b> місць <span style="color:var(--color-neutral-600);font-size:13px">· 25 м² на авто, не більше 300 місць</span>
+    </div>
+    @if (shownError(); as e) {
+      <div style="font-size:14px;background:var(--color-accent-2-100);color:var(--color-accent-2-900);padding:var(--space-2) var(--space-3)">{{ e }}</div>
+    }
+    <div class="dialog-actions" style="justify-content:flex-start">
+      <button class="btn btn-primary" (click)="save()" [disabled]="!!error() || saving()">Зберегти</button>
+      <button class="btn btn-secondary" (click)="closed.emit()">Скасувати</button>
+      <div style="flex:1"></div>
+      @if (canDelete()) {
+        <button class="btn btn-ghost" (click)="remove()">Видалити зону</button>
+      }
+    </div>
+  </div>
+</div>

@@ -11,11 +11,13 @@ export class Connection {
   }
 }
 
-/** Status 0 = server unreachable → banner; any response → back online. */
+/** No network (0) or a proxy that cannot reach the API (502–504) → banner; any other response → back online. */
+const UNREACHABLE = new Set([0, 502, 503, 504]);
+
 export const connectionInterceptor: HttpInterceptorFn = (req, next) => {
   const conn = inject(Connection);
   return next(req).pipe(tap({
     next: e => { if (e.type === HttpEventType.Response) conn.online.set(true); },
-    error: (e: HttpErrorResponse) => conn.online.set(e.status !== 0),
+    error: (e: HttpErrorResponse) => conn.online.set(!UNREACHABLE.has(e.status)),
   }));
 };

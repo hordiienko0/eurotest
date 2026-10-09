@@ -1,5 +1,16 @@
-/** Downscale a camera photo before upload (phones produce 5–12 MB files). */
+/**
+ * Downscale a camera photo before upload (phones produce 5–12 MB files).
+ * A format this browser cannot decode (e.g. HEIC in Chrome) is uploaded as is; the server checks type and size.
+ */
 export async function compressImage(file: File, max = 1600, quality = 0.8): Promise<Blob> {
+  try {
+    return await downscale(file, max, quality);
+  } catch {
+    return file;
+  }
+}
+
+async function downscale(file: File, max: number, quality: number): Promise<Blob> {
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {

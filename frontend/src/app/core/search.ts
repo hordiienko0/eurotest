@@ -17,7 +17,10 @@ export class SearchStore {
     effect(() => {
       const q = this.needle();
       clearTimeout(this.timer);
-      if (q.length < 3) { this.results.set([]); this.searchedFor.set(''); return; }
+      // Never show matches for an older query while the new one is in flight.
+      this.results.set([]);
+      this.searchedFor.set('');
+      if (q.length < 3) return;
       this.timer = setTimeout(() => {
         this.api.searchCars(q).then(r => {
           if (this.needle() !== q) return;

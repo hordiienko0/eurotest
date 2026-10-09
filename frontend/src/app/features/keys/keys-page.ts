@@ -41,17 +41,24 @@ export class KeysPage {
     effect(() => {
       const c = this.cab();
       this.store.version();
-      untracked(() => this.load(c));
+      untracked(() => {
+        if (c !== this.shownCab) { this.cells.set([]); this.shownCab = c; } // never show cabinet 01 under «Шафа 05»
+        this.load(c);
+      });
     });
     pollEvery(10_000, () => this.load(this.cab()));
     effect(() => this.mobileBar.bar.set(this.mobBar()));
     inject(DestroyRef).onDestroy(() => this.mobileBar.bar.set(null));
   }
 
+  private shownCab = 0;
+  private loadSeq = 0;
+
   private async load(c: number) {
+    const seq = ++this.loadSeq;
     try {
       const [summary, cells] = await Promise.all([this.api.keysSummary(), this.api.cabinet(c)]);
-      if (c !== this.cab()) return;
+      if (c !== this.cab() || seq !== this.loadSeq) return;
       this.summary.set(summary);
       this.cells.set(cells);
     } catch (e) {
@@ -97,6 +104,8 @@ export class KeysPage {
   protected selectCab(cb: number) { this.router.navigate(['/keys', cb]); }
   protected selectCell(n: number) { this.router.navigate(['/keys', this.cab()], { queryParams: { slot: n } }); }
   protected showOnMap(car: Car) {
-    if (car.zoneCode && this.store.select(car)) this.router.navigate(['/move', car.zoneCode]);
+    if (!car.zoneCode) return;
+    if (!this.store.active()) this.store.select(car);
+    this.router.navigate(['/move', car.zoneCode]);
   }
 }

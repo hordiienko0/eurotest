@@ -37,7 +37,7 @@
       <button class="btn btn-secondary" (click)="closed.emit()">Скасувати</button>
       <div style="flex:1"></div>
       @if (canDelete()) {
-        <button class="btn btn-ghost" (click)="remove()">Видалити зону</button>
+        <button class="btn btn-ghost" [disabled]="saving()" (click)="remove()">Видалити зону</button>
       }
     </div>
   </div>

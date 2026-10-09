@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Api } from '../../core/api';
 import { errorText } from '../../core/errors';
 import { Priority } from '../../core/models';
@@ -47,6 +47,11 @@ export class ZoneDialog implements OnInit {
   protected readonly title = computed(() => (this.state().mode === 'create' ? 'Нова зона' : 'Змінити ' + this.state().code));
   protected readonly canDelete = computed(() => this.state().mode === 'edit' && this.state().used === 0);
 
+  constructor() {
+    // A server error is about the values that were sent: editing them clears it.
+    effect(() => { this.name(); this.area(); this.priority(); this.groupCode(); untracked(() => this.serverError.set(null)); });
+  }
+
   ngOnInit() {
     const s = this.state();
     this.name.set(s.name);
@@ -73,11 +78,15 @@ export class ZoneDialog implements OnInit {
   }
 
   protected async remove() {
+    if (this.saving()) return;
+    this.saving.set(true);
     try {
       await this.api.deleteZone(this.state().code!);
       this.saved.emit();
     } catch (e) {
       this.serverError.set(errorText(e));
+    } finally {
+      this.saving.set(false);
     }
   }
 }

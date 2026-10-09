@@ -82,7 +82,7 @@
           <div style="display:flex;gap:var(--space-2)">
             <input class="input input-lg" placeholder="напр. D7" style="flex:1;min-width:0;text-transform:uppercase"
               [value]="spotInput()" (input)="spotInput.set(val($event).toUpperCase()); spotErr.set('')" (keydown.enter)="applySpot()">
-            <button class="btn btn-secondary" style="min-height:44px" (click)="applySpot()">Вказати</button>
+            <button class="btn btn-secondary" style="min-height:44px" [disabled]="store.busy()" (click)="applySpot()">Вказати</button>
           </div>
           @if (spotErr()) {
             <div class="err" style="margin-top:4px">{{ spotErr() }}</div>
@@ -90,7 +90,7 @@
           <div style="font-size:12px;margin-top:var(--space-3);color:var(--color-neutral-700)">Найближчі вільні</div>
           <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:4px">
             @for (f of nearFree(); track f) {
-              <button class="btn btn-secondary" style="min-height:44px;min-width:56px" (click)="pickNear(f)">{{ f }}</button>
+              <button class="btn btn-secondary" style="min-height:44px;min-width:56px" [disabled]="store.busy()" (click)="pickNear(f)">{{ f }}</button>
             }
           </div>
         </div>
@@ -119,18 +119,18 @@
 
       @if (store.originTaken()) {
         <div style="display:flex;flex-direction:column;gap:var(--space-2);border:2px solid var(--color-accent-2-600);padding:var(--space-3)">
-          <div style="font-size:14px">Початкове місце {{ locLabel(store.from()) }} вже зайняте. Вкажіть інше місце в зоні {{ store.from()?.zoneCode }} для повернення.</div>
+          <div style="font-size:14px">Початкове місце {{ locLabel(store.from()) }} недоступне. Вкажіть інше місце в зоні {{ store.from()?.zoneCode }} для повернення.</div>
           <div style="display:flex;gap:var(--space-2)">
             <input class="input input-lg" placeholder="напр. D7" style="flex:1;min-width:0;text-transform:uppercase"
               [value]="cancelSpot()" (input)="cancelSpot.set(val($event).toUpperCase()); cancelErr.set('')">
-            <button class="btn btn-secondary" style="min-height:44px" (click)="cancel(cancelSpot())">Повернути</button>
+            <button class="btn btn-secondary" style="min-height:44px" [disabled]="store.busy()" (click)="cancel(cancelSpot())">Повернути</button>
           </div>
           @if (cancelErr()) {
             <div class="err">{{ cancelErr() }}</div>
           }
         </div>
       } @else {
-        <button class="btn btn-ghost btn-block" (click)="cancel()">Скасувати: повернути на {{ locLabel(store.from()) }}</button>
+        <button class="btn btn-ghost btn-block" [disabled]="store.busy()" (click)="cancel()">Скасувати: повернути на {{ locLabel(store.from()) }}</button>
       }
     </div>
   }

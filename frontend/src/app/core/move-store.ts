@@ -57,8 +57,10 @@ export class MoveStore {
   async start() {
     const car = this.selected();
     if (!car) return;
-    const { value } = await this.run(() => this.api.startMove(car.id));
+    const { value, error } = await this.run(() => this.api.startMove(car.id));
     if (value) { this.active.set(value); this.selected.set(null); this.originTaken.set(false); }
+    // The car moved or vanished meanwhile: the snapshot is stale, let the operator pick again.
+    if (['CarBusy', 'NotFound'].includes(errorCode(error) ?? '')) this.selected.set(null);
   }
 
   /** Returns an error message for inline display, or null on success. */
@@ -77,11 +79,13 @@ export class MoveStore {
     if (value) this.active.set(value);
   }
 
-  async finish() {
+  /** Returns the completed move, or null. */
+  async finish(): Promise<Move | null> {
     const a = this.active();
-    if (!a) return;
+    if (!a) return null;
     const { value } = await this.run(() => this.api.completeMove(a.id));
     if (value) { this.active.set(null); this.result.set(value); this.originTaken.set(false); }
+    return value ?? null;
   }
 
   /** Returns an error message, or null on success. OriginTaken switches the panel to "choose a return spot". */
@@ -90,12 +94,15 @@ export class MoveStore {
     if (!a) return null;
     const { value, error } = await this.run(() => this.api.cancelMove(a.id, fallbackSpot), true);
     if (value) { this.active.set(null); this.reset(); return null; }
+    if (!error) return null; // another action was still running
     if (errorCode(error) === 'OriginTaken') this.originTaken.set(true);
     else if (!fallbackSpot) this.notify.error(error);
     return errorText(error);
   }
 
+  /** One move action at a time: a double tap must not send the request twice. */
   private async run<T>(fn: () => Promise<T>, quiet = false): Promise<{ value?: T; error?: unknown }> {
+    if (this.busy()) return {};
     this.busy.set(true);
     try {
       return { value: await fn() };

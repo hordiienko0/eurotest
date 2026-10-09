@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, untracked } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Clock } from './core/clock';
 import { Connection } from './core/connection';
@@ -43,10 +43,20 @@ export class App {
 
   constructor() {
     const operators = inject(OperatorStore);
-    inject(SettingsStore).load();
-    // resume() must not depend on the operator list loading: a failed load would hide an active move.
-    operators.load().catch(() => {});
-    void this.moves.resume();
+    const settings = inject(SettingsStore);
+    const boot = () => {
+      settings.load();
+      // Operator first, so /moves/active carries X-Operator-Id; resume even if the list fails (a stored id still works).
+      operators.load().catch(() => {}).finally(() => void this.moves.resume());
+    };
+    // Started while the API was down? Load again as soon as it answers.
+    let wasOnline = true;
+    effect(() => {
+      const online = this.conn.online();
+      if (online && !wasOnline) untracked(boot);
+      wasOnline = online;
+    });
+    boot();
   }
 
   protected sub(c: Car) {

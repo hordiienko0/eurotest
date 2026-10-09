@@ -45,7 +45,7 @@ export class MovePage {
     effect(() => {
       const code = this.zone();
       this.store.version(); // reload after every move action
-      localStorage.setItem('eurocar.lastZone', code);
+      if (code !== code.toUpperCase()) { untracked(() => this.router.navigate(['/move', code.toUpperCase()], { replaceUrl: true })); return; }
       untracked(() => {
         if (this.detail()?.code !== code) this.detail.set(null);
         this.load(code);
@@ -56,14 +56,20 @@ export class MovePage {
     inject(DestroyRef).onDestroy(() => this.mobileBar.bar.set(null));
   }
 
+  private loadSeq = 0;
+
   private async load(code: string) {
+    const seq = ++this.loadSeq;
     try {
       const [d, o] = await Promise.all([this.api.zone(code), this.api.zones()]);
-      if (code !== this.zone()) return;
+      // A slower, older request (e.g. the 10 s poll) must not overwrite a newer one.
+      if (code !== this.zone() || seq !== this.loadSeq) return;
       this.detail.set(d);
       this.overview.set(o);
+      localStorage.setItem('eurocar.lastZone', code);
     } catch (e) {
       if (errorCode(e) === 'NotFound') {
+        if (localStorage.getItem('eurocar.lastZone') === code) localStorage.removeItem('eurocar.lastZone');
         this.notify.error(e);
         this.router.navigate(['/zones']);
       }
@@ -202,8 +208,15 @@ export class MovePage {
   async setDest(code: string) {
     const kind = this.zonesByCode().get(code)?.kind ?? (this.detail()?.code === code ? this.detail()?.kind : undefined);
     if (kind === 'External') await this.store.setTarget(code);
-    else if (this.store.to()) await this.store.setTarget(null);
+    // Switching to another mapped zone drops the old spot; re-tapping the current one keeps it.
+    else if (this.store.to() && this.store.to()!.zoneCode !== code) await this.store.setTarget(null);
     if (code !== this.zone()) this.router.navigate(['/move', code]);
+  }
+
+  /** Same as the desktop panel: after finishing, show the car where it now stands. */
+  private async finishMobile() {
+    const r = await this.store.finish();
+    if (r?.to && r.to.zoneCode !== this.zone()) this.router.navigate(['/move', r.to.zoneCode]);
   }
 
   protected readonly nearFree = computed(() => {
@@ -230,12 +243,12 @@ export class MovePage {
     const elapsed = a ? dur(this.clock.now() - Date.parse(a.startedAt)) : '';
     if (phase === 'selected') {
       const route = this.route();
-      return { kicker: `Škoda ${car.model} · ${locLabel(this.store.from())}`, title: route?.canDraw ? route.meta : 'Готово до початку', kind: 'btn', label: 'Почати', action: () => this.store.start() };
+      return { kicker: `Škoda ${car.model} · ${locLabel(this.store.from())}`, title: route?.canDraw ? route.meta : 'Готово до початку', kind: 'btn', label: 'Почати', disabled: this.store.busy(), action: () => this.store.start() };
     }
     if (phase === 'moving' && !to) return { kicker: 'У дорозі · ' + elapsed, title: 'Вкажіть нове місце', kind: 'text' };
     if (phase === 'moving' && this.settings.value().requirePhoto && !a?.photoUrl)
       return { kicker: `Місце ${locLabel(to)} · ${elapsed}`, title: 'Сфотографуйте авто', kind: 'photo', onFile: f => this.store.photo(f) };
-    if (phase === 'moving') return { kicker: `Місце ${locLabel(to)} · ${elapsed}`, title: 'Можна завершувати', kind: 'btn', label: 'Завершити', action: () => this.store.finish() };
+    if (phase === 'moving') return { kicker: `Місце ${locLabel(to)} · ${elapsed}`, title: 'Можна завершувати', kind: 'btn', label: 'Завершити', disabled: this.store.busy(), action: () => this.finishMobile() };
     if (r) return { kicker: `Операція № ${r.no} · ${moveDuration(r)}`, title: `${locLabel(r.from)} → ${locLabel(r.to)}`, kind: 'btn', label: 'Нова', action: () => this.store.reset() };
     return null;
   });

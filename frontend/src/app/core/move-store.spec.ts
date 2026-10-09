@@ -42,4 +42,23 @@ describe('MoveStore', () => {
 
     expect(store.active()).toEqual(existing);
   });
+
+  it('a double tap on «Почати» sends only one start request', async () => {
+    let calls = 0;
+    api['startMove'] = () => { calls++; return new Promise(r => setTimeout(() => r(move(car(2, 'A2'))), 5)); };
+    store.select(car(2, 'A2'));
+
+    await Promise.all([store.start(), store.start()]);
+
+    expect(calls).toBe(1);
+  });
+
+  it('when someone else already took the selected car, the stale selection is dropped', async () => {
+    api['startMove'] = () => Promise.reject(new HttpErrorResponse({ status: 409, error: { code: 'CarBusy', title: 'x' } }));
+    store.select(car(2, 'A2'));
+
+    await store.start();
+
+    expect(store.selected()).toBeNull();
+  });
 });

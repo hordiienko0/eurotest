@@ -102,12 +102,12 @@ export class MovePanel {
   }
 
   protected async finish() {
-    await this.store.finish();
-    const r = this.store.result();
+    const r = await this.store.finish();
     if (r?.to) this.router.navigate(['/move', r.to.zoneCode]);
   }
 
   protected async cancel(fallback: string | null = null) {
+    if (fallback !== null && !fallback.trim()) { this.cancelErr.set('Вкажіть номер місця.'); return; }
     const from = this.store.from();
     const err = await this.store.cancel(fallback);
     if (err) { if (fallback) this.cancelErr.set(err); return; }

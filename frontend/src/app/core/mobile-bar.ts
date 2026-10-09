@@ -6,6 +6,7 @@ export interface MobileBar {
   title: string;
   kind: 'btn' | 'photo' | 'text';
   label?: string;
+  disabled?: boolean;
   action?: () => void;
   onFile?: (file: File) => void;
 }

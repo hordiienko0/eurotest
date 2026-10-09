@@ -63,7 +63,7 @@
       @if (b.kind === 'photo') {
         <label class="btn btn-primary" style="position:relative;min-height:48px;cursor:pointer;color:#fff">Зробити фото<input class="file-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" (change)="onBarFile($event, b)"></label>
       } @else if (b.kind === 'btn') {
-        <button class="btn btn-primary" style="min-height:48px" (click)="b.action?.()">{{ b.label }}</button>
+        <button class="btn btn-primary" style="min-height:48px" [disabled]="b.disabled" (click)="b.action?.()">{{ b.label }}</button>
       }
     </div>
   }

@@ -1,0 +1,58 @@
+@import './styles/modernist.css';
+
+/* Palette overrides from the prototype (docs/design/Логистика.dc.html, lines 14–17). */
+:root {
+  --color-bg: #ffffff;
+  --color-surface: #eef1f0;
+  --color-accent: #0e3a2f;
+  --color-accent-100: oklch(0.96 0.02 170);
+  --color-accent-200: oklch(0.91 0.035 170);
+  --color-accent-300: oklch(0.82 0.05 170);
+  --color-accent-400: oklch(0.68 0.07 170);
+  --color-accent-500: oklch(0.50 0.07 170);
+  --color-accent-600: oklch(0.40 0.06 170);
+  --color-accent-700: oklch(0.33 0.055 170);
+  --color-accent-800: oklch(0.27 0.045 170);
+  --color-accent-900: oklch(0.21 0.035 170);
+  --color-accent-2: #78faae;
+  --color-accent-2-100: oklch(0.97 0.04 157);
+  --color-accent-2-200: oklch(0.94 0.08 157);
+  --color-accent-2-300: oklch(0.91 0.13 157);
+  --color-accent-2-400: oklch(0.89 0.17 157);
+  --color-accent-2-500: oklch(0.80 0.17 157);
+  --color-accent-2-600: oklch(0.68 0.15 157);
+  --color-accent-2-700: oklch(0.55 0.12 157);
+  --color-accent-2-800: oklch(0.42 0.09 157);
+  --color-accent-2-900: oklch(0.32 0.06 157);
+}
+body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); }
+a { color: var(--color-accent-700); }
+a:hover { color: var(--color-accent-500); }
+
+/* Building blocks shared by pages; values copied from the prototype's inline styles. */
+.kicker { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-accent-500); }
+.kicker.muted { color: var(--color-neutral-600); }
+.title-xl { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.title-lg { font-size: 32px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.1; }
+.tnum { font-variant-numeric: tabular-nums; }
+.stats { display: grid; border-top: 2px solid var(--color-text); border-bottom: 2px solid var(--color-text); }
+.stats > div { padding: var(--space-3); }
+.stats > div:first-child { padding-left: 0; }
+.stats > div + div { border-left: 1px solid var(--color-divider); }
+.stat-n { font-size: 28px; font-weight: 800; white-space: nowrap; }
+.split { display: flex; flex-wrap: wrap; flex: 1; border-bottom: 2px solid var(--color-text); }
+.split > section { flex: 1 1 680px; min-width: 0; padding: var(--space-6); border-right: 2px solid var(--color-text); display: flex; flex-direction: column; gap: var(--space-4); box-sizing: border-box; }
+.split > aside { flex: 1 1 360px; max-width: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
+.cells { display: grid; gap: 2px; background: var(--color-neutral-300); border: 2px solid var(--color-text); }
+.cell { all: unset; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; min-width: 0; overflow: hidden; cursor: pointer; }
+.cell-n { font-size: 10px; font-weight: 700; opacity: 0.7; }
+.cell-l { font-size: 10px; font-weight: 600; line-height: 1.1; word-break: break-all; }
+.legend { display: flex; gap: var(--space-6); flex-wrap: wrap; font-size: 13px; }
+.legend > div { display: flex; gap: 8px; align-items: center; }
+.sw { display: inline-block; width: 14px; height: 14px; }
+.err { font-size: 13px; color: var(--color-accent-2-900); background: var(--color-accent-2-100); padding: 4px 8px; }
+.row-line { display: flex; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--color-divider); }
+.input-lg { font-size: 16px; min-height: 44px; box-sizing: border-box; }
+.file-hidden { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+/* While offline, actions inside pages are visibly disabled. */
+.offline main .btn, .offline main .cell, .offline main [role='button'] { pointer-events: none; opacity: 0.45; }

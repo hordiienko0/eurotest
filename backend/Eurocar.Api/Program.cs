@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Eurocar.Api.Features.Moves;
 using Eurocar.Api.Features.Zones;
 using Eurocar.Api.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,10 @@ builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Ad
 builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddScoped<ZoneService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentOperator, HeaderCurrentOperator>();
+builder.Services.AddSingleton<IPhotoStorage, LocalDiskPhotoStorage>();
+builder.Services.AddScoped<MoveService>();
 
 var app = builder.Build();
 app.UseExceptionHandler();
@@ -23,6 +28,7 @@ using (var scope = app.Services.CreateScope())
 
 var api = app.MapGroup("/api/v1");
 api.MapZones();
+api.MapMoves();
 
 app.Run();
 

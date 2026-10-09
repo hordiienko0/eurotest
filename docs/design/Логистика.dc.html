@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/modernist-ff17042f-4e7e-481e-84ad-c3687eca6461/styles.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap">
+<script src="_ds/modernist-ff17042f-4e7e-481e-84ad-c3687eca6461/_ds_bundle.js"></script>
+<style>:root{--color-bg:#ffffff;--color-surface:#eef1f0;
+--color-accent:#0e3a2f;--color-accent-100:oklch(0.96 0.02 170);--color-accent-200:oklch(0.91 0.035 170);--color-accent-300:oklch(0.82 0.05 170);--color-accent-400:oklch(0.68 0.07 170);--color-accent-500:oklch(0.50 0.07 170);--color-accent-600:oklch(0.40 0.06 170);--color-accent-700:oklch(0.33 0.055 170);--color-accent-800:oklch(0.27 0.045 170);--color-accent-900:oklch(0.21 0.035 170);
+--color-accent-2:#78faae;--color-accent-2-100:oklch(0.97 0.04 157);--color-accent-2-200:oklch(0.94 0.08 157);--color-accent-2-300:oklch(0.91 0.13 157);--color-accent-2-400:oklch(0.89 0.17 157);--color-accent-2-500:oklch(0.80 0.17 157);--color-accent-2-600:oklch(0.68 0.15 157);--color-accent-2-700:oklch(0.55 0.12 157);--color-accent-2-800:oklch(0.42 0.09 157);--color-accent-2-900:oklch(0.32 0.06 157)}
+body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}a{color:var(--color-accent-700)}a:hover{color:var(--color-accent-500)}</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;box-sizing:border-box;padding-bottom:{{ padB }}px">
+  <header style="display:flex;align-items:stretch;gap:var(--space-6);padding:0 var(--space-6);background:var(--color-accent);color:#fff;border-bottom:2px solid var(--color-text);flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;justify-content:center;padding:var(--space-3) 0">
+      <div style="font-weight:800;font-size:18px;letter-spacing:-0.01em">Євро Лоджистікс</div>
+      <div style="font-size:12px;color:var(--color-accent-2)">Логістика авто · Соломоново</div>
+    </div>
+    <sc-if value="{{ notMob }}" hint-placeholder-val="{{ true }}">
+    <nav style="display:flex;gap:var(--space-2)">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+        <div role="button" tabindex="0" onClick="{{ t.onClick }}" style="cursor:pointer;display:flex;align-items:center;padding:0 var(--space-3);font-size:15px;font-weight:700;border-bottom:4px solid {{ t.line }};border-top:4px solid transparent" style-hover="background:var(--color-accent-600)">{{ t.label }}</div>
+      </sc-for>
+    </nav>
+    </sc-if>
+    <div style="flex:1"></div>
+    <div style="position:relative;align-self:center;flex:0 1 240px;min-width:200px;padding:var(--space-2) 0">
+      <input class="input" placeholder="Пошук за VIN, напр. 012345" value="{{ query }}" onChange="{{ onQuery }}" style="width:100%;box-sizing:border-box;background:var(--color-bg);font-size:16px;min-height:44px">
+      <sc-if value="{{ hasResults }}">
+        <div style="position:absolute;top:100%;right:0;width:400px;max-width:90vw;background:var(--color-bg);color:var(--color-text);border:2px solid var(--color-text);box-shadow:var(--shadow-md);z-index:30;display:flex;flex-direction:column">
+          <sc-for list="{{ results }}" as="r" hint-placeholder-count="3">
+            <div role="button" tabindex="0" onClick="{{ r.onClick }}" style="cursor:pointer;padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:2px" style-hover="background:var(--color-surface)">
+              <span style="font-weight:700;letter-spacing:0.04em">{{ r.vin }}</span>
+              <span style="font-size:13px;color:var(--color-neutral-700)">{{ r.sub }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ noResults }}">
+        <div style="position:absolute;top:100%;right:0;width:300px;background:var(--color-bg);color:var(--color-text);border:2px solid var(--color-text);z-index:30;padding:var(--space-3);font-size:14px">Авто з таким VIN не знайдено.</div>
+      </sc-if>
+    </div>
+    <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}"><div style="align-self:center;font-variant-numeric:tabular-nums;font-weight:600;font-size:14px">{{ clock }}</div></sc-if>
+  </header>
+
+  <sc-if value="{{ isZones }}" hint-placeholder-val="{{ true }}">
+    <main style="padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-8);box-sizing:border-box;width:100%;max-width:1440px">
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-500)">Усі зони</div>
+        <div style="font-size:40px;font-weight:800;letter-spacing:-0.02em;line-height:1.1">Зони зберігання</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));border-top:2px solid var(--color-text);border-bottom:2px solid var(--color-text)">
+        <div style="padding:var(--space-4) var(--space-4) var(--space-4) 0"><div style="font-size:28px;font-weight:800;white-space:nowrap">{{ tot.ownUsed }} / {{ tot.ownCap }}</div><div style="font-size:14px">власні зони · вільно {{ tot.ownFree }}</div></div>
+        <div style="padding:var(--space-4);border-left:1px solid var(--color-divider)"><div style="font-size:28px;font-weight:800;white-space:nowrap">{{ tot.extUsed }} / {{ tot.extCap }}</div><div style="font-size:14px">партнери й дилери</div></div>
+        <div style="padding:var(--space-4);border-left:1px solid var(--color-divider)"><div style="font-size:28px;font-weight:800;white-space:nowrap">{{ tot.online }} / {{ tot.extCount }}</div><div style="font-size:14px">зовнішніх складів на зв’язку</div></div>
+        <div style="padding:var(--space-4);border-left:1px solid var(--color-divider)"><div style="font-size:28px;font-weight:800">{{ tot.ops }}</div><div style="font-size:14px">переміщень у журналі</div></div>
+      </div>
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="8">
+        <section style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <div style="display:flex;align-items:baseline;gap:var(--space-4);border-bottom:2px solid var(--color-text);padding-bottom:var(--space-2);flex-wrap:wrap">
+            <span style="font-size:20px;font-weight:800;color:var(--color-accent-500)">{{ g.id }}</span>
+            <span style="font-size:20px;font-weight:800;flex:1 1 auto">{{ g.name }}</span>
+            <span style="font-size:14px;font-variant-numeric:tabular-nums">{{ g.summary }}</span>
+            <sc-if value="{{ g.editable }}"><button class="btn btn-secondary" onClick="{{ g.add }}">+ Додати</button></sc-if>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ g.rows }}" as="z" hint-placeholder-count="3">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-4);padding:var(--space-3) 0;border-bottom:1px solid var(--color-divider)">
+                <div style="flex:1 1 200px;min-width:0;display:flex;gap:var(--space-3);align-items:baseline"><b style="min-width:36px">{{ z.id }}</b><span>{{ z.name }}</span></div>
+                <div style="flex:0 0 auto"><span class="tag {{ z.priClass }}">{{ z.pri }}</span></div>
+                <div style="flex:1 1 180px;display:flex;gap:var(--space-3);align-items:center"><div style="flex:1;height:8px;background:var(--color-neutral-200)"><div style="height:100%;width:{{ z.pct }}%;background:var(--color-accent)"></div></div><span style="font-variant-numeric:tabular-nums;font-size:13px;white-space:nowrap">{{ z.used }} / {{ z.cap }} · вільн. <b>{{ z.free }}</b></span></div>
+                <div style="flex:0 1 150px;font-size:13px;color:{{ z.infoColor }}">{{ z.info }}</div>
+                <div style="display:flex;gap:var(--space-2);margin-left:auto;flex-shrink:0">
+                  <sc-if value="{{ z.editable }}"><button class="btn btn-ghost" onClick="{{ z.edit }}" style="min-height:44px;white-space:nowrap">Змінити</button></sc-if>
+                  <button class="btn btn-secondary" onClick="{{ z.open }}" style="min-height:44px;white-space:nowrap">Відкрити →</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-for>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ isMove }}">
+    <main style="display:flex;flex-wrap:wrap;flex:1;border-bottom:2px solid var(--color-text)">
+      <section style="flex:1 1 680px;min-width:0;padding:var(--space-6);border-right:2px solid var(--color-text);display:flex;flex-direction:column;gap:var(--space-4)">
+        <div style="display:flex;gap:var(--space-4);align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1 1 auto;display:flex;flex-direction:column;gap:4px;align-items:flex-start">
+            <button class="btn btn-ghost" onClick="{{ toZones }}">← Усі зони</button>
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-500)">{{ zv.group }} · {{ zv.groupName }}</div>
+            <div style="font-size:32px;font-weight:800;letter-spacing:-0.01em;line-height:1.1">{{ zv.id }} · {{ zv.name }}</div>
+            <div style="font-size:15px">{{ zv.used }} зайнято · {{ zv.free }} вільно · {{ zv.cap }} місць</div>
+          </div>
+          <sc-if value="{{ zvMapped }}">
+            <div class="seg">
+              <label class="seg-opt" style="white-space:nowrap"><input type="radio" name="view" checked="{{ isAerial }}" onChange="{{ setAerial }}">Вид згори</label>
+              <label class="seg-opt"><input type="radio" name="view" checked="{{ isScheme }}" onChange="{{ setScheme }}">Схема</label>
+            </div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ route.has }}">
+          <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;border:2px solid var(--color-accent);padding:var(--space-3) var(--space-4)">
+            <div style="flex:1 1 220px">
+              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-500)">Маршрут</div>
+              <div style="font-size:18px;font-weight:800">{{ route.title }}</div>
+              <div style="font-size:14px">{{ route.meta }}</div>
+            </div>
+            <sc-if value="{{ route.canDraw }}"><button class="btn btn-secondary" onClick="{{ route.toggle }}">{{ route.toggleLabel }}</button></sc-if>
+            <a class="btn btn-primary" href="{{ route.gmaps }}" target="_blank" rel="noopener" style="color:#fff">Google Карти ↗</a>
+          </div>
+        </sc-if>
+
+        <div style="font-size:15px;padding:var(--space-3) var(--space-4);background:var(--color-surface)">{{ hint }}</div>
+
+        <sc-if value="{{ showAerial }}">
+          <div ref="{{ mapRef }}" style="overflow-x:auto;border:2px solid var(--color-text)">
+            <div style="position:relative;width:100%;min-width:{{ map.minW }}px;aspect-ratio:{{ map.aspect }};background:var(--color-neutral-800);overflow:hidden">
+              <div style="position:absolute;left:0;top:0;right:0;height:{{ map.stripH }}%;background:var(--color-neutral-300);border-bottom:2px solid var(--color-neutral-100)"></div>
+              <div style="position:absolute;left:0;top:0;width:{{ map.gateW }}%;height:{{ map.stripH }}%;background:var(--color-neutral-800);display:flex;align-items:center;justify-content:center;text-align:center;color:var(--color-neutral-100);font-size:8px;font-weight:800;line-height:1.2">В’ЇЗД ↓</div>
+              <div style="position:absolute;left:{{ map.stripL }}%;top:0;height:{{ map.stripH }}%;display:flex;align-items:center;font-size:11px;font-weight:800;letter-spacing:0.12em;color:var(--color-neutral-800)">{{ zv.strip }}</div>
+              <div style="position:absolute;left:{{ map.gateW }}%;right:{{ map.gateW }}%;top:{{ map.topDash }}%;border-top:2px dashed var(--color-neutral-500)"></div>
+              <div style="position:absolute;left:{{ map.gateW }}%;right:{{ map.gateW }}%;top:{{ map.botDash }}%;border-top:2px dashed var(--color-neutral-500)"></div>
+              <sc-for list="{{ map.aisles }}" as="a" hint-placeholder-count="6">
+                <div style="position:absolute;left:{{ a.l }}%;top:{{ map.arrowT }}%;width:{{ map.gateW }}%;text-align:center;color:var(--color-neutral-500);font-size:16px;font-weight:800">{{ a.arrow }}</div>
+              </sc-for>
+              <sc-for list="{{ spots }}" as="s" hint-placeholder-count="100">
+                <button onClick="{{ s.onClick }}" title="{{ s.title }}" style="all:unset;position:absolute;box-sizing:border-box;left:{{ s.l }}%;top:{{ s.t }}%;width:{{ map.spotW }}%;height:{{ map.spotH }}%;border-top:1px solid var(--color-neutral-300);border-bottom:1px solid var(--color-neutral-300);background:{{ s.spotBg }};box-shadow:{{ s.ring }};cursor:{{ s.cursor }};display:flex;flex-direction:{{ s.dir }};align-items:center;justify-content:space-between;padding:0 3px">
+                  <sc-if value="{{ s.hasCar }}">
+                    <div style="width:64%;flex-shrink:0;height:68%;background:{{ s.carBg }};outline:1px solid var(--color-neutral-900);display:flex;flex-direction:{{ s.dir }};align-items:stretch">
+                      <div style="flex:0 0 18%"></div>
+                      <div style="flex:0 0 14%;background:var(--color-neutral-900);opacity:0.7;margin:8% 0"></div>
+                      <div style="flex:1 1 auto"></div>
+                      <div style="flex:0 0 9%;background:var(--color-neutral-900);opacity:0.55;margin:12% 0"></div>
+                      <div style="flex:0 0 10%"></div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ s.noCar }}">
+                    <div style="width:64%;flex-shrink:0;font-size:8px;font-weight:800;color:{{ s.fg }};letter-spacing:0.04em">{{ s.tag }}</div>
+                  </sc-if>
+                  <span style="font-size:8px;font-weight:700;color:var(--color-neutral-300)">{{ s.id }}</span>
+                </button>
+              </sc-for>
+              <sc-if value="{{ route.draw }}">
+                <svg viewBox="{{ map.viewBox }}" preserveAspectRatio="none" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none">
+                  <polyline points="{{ route.points }}" style="fill:none;stroke:var(--color-accent-2);stroke-width:4px;stroke-dasharray:10 6;stroke-linejoin:round;vector-effect:non-scaling-stroke"></polyline>
+                </svg>
+                <div style="position:absolute;left:{{ route.sx }}%;top:{{ route.sy }}%;transform:translate(-50%,-50%);width:12px;height:12px;background:var(--color-accent-2);border:2px solid var(--color-accent);pointer-events:none"></div>
+                <div style="position:absolute;left:{{ route.sx }}%;top:{{ route.sy }}%;transform:translate(10px,-50%);background:var(--color-accent);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;white-space:nowrap;pointer-events:none">{{ route.startLabel }}</div>
+                <div style="position:absolute;left:{{ route.ex }}%;top:{{ route.ey }}%;transform:translate(-50%,-50%);width:18px;height:18px;border:3px solid var(--color-accent-2);pointer-events:none"></div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showScheme }}">
+          <div style="overflow-x:auto">
+            <div style="display:grid;grid-template-columns:repeat({{ zv.per }},minmax(52px,1fr));gap:2px;background:var(--color-neutral-300);border:2px solid var(--color-text)">
+              <sc-for list="{{ spots }}" as="c" hint-placeholder-count="100">
+                <button onClick="{{ c.onClick }}" title="{{ c.title }}" style="all:unset;box-sizing:border-box;aspect-ratio:1/0.95;padding:5px;display:flex;flex-direction:column;justify-content:space-between;cursor:{{ c.cursor }};background:{{ c.sBg }};color:{{ c.sFg }};box-shadow:{{ c.sRing }};min-width:0;overflow:hidden">
+                  <span style="font-size:10px;font-weight:700;opacity:0.7">{{ c.id }}</span>
+                  <span style="font-size:10px;font-weight:600;line-height:1.1;word-break:break-all">{{ c.sLabel }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ zvMapped }}">
+          <div style="display:flex;gap:var(--space-6);flex-wrap:wrap;font-size:13px">
+            <div style="display:flex;gap:8px;align-items:center"><span style="width:14px;height:14px;background:var(--color-surface);border:1px solid var(--color-neutral-400)"></span>Зайнято</div>
+            <div style="display:flex;gap:8px;align-items:center"><span style="width:14px;height:14px;background:var(--color-bg);border:1px solid var(--color-neutral-400)"></span>Вільно</div>
+            <div style="display:flex;gap:8px;align-items:center"><span style="width:14px;height:14px;background:var(--color-accent-2);border:1px solid var(--color-accent)"></span>Вибрано</div>
+            <div style="display:flex;gap:8px;align-items:center"><span style="width:14px;height:14px;background:var(--color-accent-2-200);box-shadow:inset 0 0 0 2px var(--color-accent-2-700)"></span>Нове місце</div>
+            <div style="display:flex;gap:8px;align-items:center"><span style="width:18px;border-top:3px dashed var(--color-accent-2-700)"></span>Маршрут</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ zvExt }}">
+          <div style="display:flex;align-items:center;gap:var(--space-3);border-top:2px solid var(--color-text);border-bottom:2px solid var(--color-text);padding:var(--space-3) 0;flex-wrap:wrap">
+            <span style="width:10px;height:10px;background:{{ zv.dot }}"></span>
+            <span style="font-weight:700">{{ zv.info }}</span>
+            <span style="font-size:13px;color:var(--color-neutral-600)">Залишки надходять зі складу автоматично</span>
+            <div style="flex:1"></div>
+            <sc-if value="{{ canSendHere }}"><button class="btn btn-primary" onClick="{{ sendHere }}">Відправити авто на цей склад</button></sc-if>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ extCars }}" as="r" hint-placeholder-count="6">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-1) var(--space-4);padding:var(--space-2);border-bottom:1px solid var(--color-divider);background:{{ r.bg }}">
+                <div style="flex:1 1 200px;min-width:0"><b>{{ r.model }}</b> · {{ r.color }}<div style="font-size:13px;letter-spacing:0.04em;font-variant-numeric:tabular-nums">{{ r.vin }}</div></div>
+                <sc-if value="{{ r.canPick }}"><button class="btn btn-secondary" onClick="{{ r.pick }}" style="min-height:44px">Вибрати</button></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </section>
+
+      <aside style="flex:1 1 360px;max-width:100%;display:flex;flex-direction:column">
+        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-bottom:2px solid var(--color-text)">
+          <sc-for list="{{ steps }}" as="s" hint-placeholder-count="5">
+            <div style="padding:var(--space-3);border-right:1px solid var(--color-divider);background:{{ s.bg }};color:{{ s.fg }}">
+              <div style="font-size:18px;font-weight:800">{{ s.n }}</div>
+              <div style="font-size:12px;font-weight:600">{{ s.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6);flex:1">
+          <div class="field" style="margin:0">
+            <label>Оператор</label>
+            <input class="input" value="{{ operator }}" onChange="{{ onOperator }}" style="width:100%;box-sizing:border-box;font-size:16px;min-height:44px">
+          </div>
+
+          <sc-if value="{{ isIdle }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+              <div style="font-size:32px;font-weight:800;line-height:1.05;letter-spacing:-0.02em">Оберіть автомобіль</div>
+              <div style="font-size:15px;color:var(--color-neutral-700)">На карті зони, у списку складу або через пошук за VIN.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hasCar }}">
+            <div style="border-top:2px solid var(--color-text);padding-top:var(--space-4);display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+              <div style="grid-column:1/-1">
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-500)">Автомобіль</div>
+                <div style="font-size:32px;font-weight:800;letter-spacing:-0.01em">Škoda {{ car.model }}</div>
+                <div style="font-size:14px;letter-spacing:0.04em">VIN {{ car.vin }} · {{ car.color }}</div>
+                <div style="margin-top:var(--space-2);display:flex;gap:var(--space-2);align-items:baseline;font-size:14px"><span class="tag tag-accent-2">Ключ</span><b>{{ car.keyText }}</b></div>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-neutral-600)">Звідки</div>
+                <div style="font-size:28px;font-weight:800">{{ fromLabel }}</div>
+                <div style="font-size:13px">{{ fromName }}</div>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-neutral-600)">Куди</div>
+                <div style="font-size:28px;font-weight:800;color:var(--color-accent-2-700)">{{ toLabel }}</div>
+                <div style="font-size:13px">{{ toName }}</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isSelected }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+              <button class="btn btn-primary btn-block" onClick="{{ start }}">Почати переміщення</button>
+              <button class="btn btn-ghost btn-block" onClick="{{ reset }}">Скасувати вибір</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isMoving }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+              <div style="border:2px solid var(--color-accent-2-600);padding:var(--space-4)">
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-2-800)">У дорозі · початок {{ startTime }}</div>
+                <div style="font-size:56px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1">{{ elapsed }}</div>
+              </div>
+              <div class="field" style="margin:0">
+                <label>Зона призначення</label>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:2px;background:var(--color-neutral-300);border:2px solid var(--color-text)">
+                  <sc-for list="{{ destChips }}" as="d" hint-placeholder-count="9">
+                    <div role="button" tabindex="0" onClick="{{ d.onClick }}" title="{{ d.title }}" style="cursor:pointer;padding:6px 8px;background:{{ d.bg }};color:{{ d.fg }}">
+                      <div style="font-size:15px;font-weight:800">{{ d.id }}</div>
+                      <div style="font-size:11px">вільн. {{ d.free }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <button class="btn btn-ghost" onClick="{{ toZones }}" style="margin-top:var(--space-2)">Зовнішній склад або дилер →</button>
+              </div>
+              <sc-if value="{{ zvMapped }}">
+                <div class="field" style="margin:0">
+                  <label>Номер місця в зоні {{ zv.id }}</label>
+                  <div style="display:flex;gap:var(--space-2)">
+                    <input class="input" placeholder="напр. D7" value="{{ spotInput }}" onChange="{{ onSpotInput }}" style="flex:1;min-width:0;box-sizing:border-box;font-size:16px;min-height:44px;text-transform:uppercase">
+                    <button class="btn btn-secondary" onClick="{{ applySpot }}" style="min-height:44px">Вказати</button>
+                  </div>
+                  <sc-if value="{{ hasSpotErr }}"><div style="font-size:13px;margin-top:4px;color:var(--color-accent-2-900);background:var(--color-accent-2-100);padding:4px 8px">{{ spotErr }}</div></sc-if>
+                  <div style="font-size:12px;margin-top:var(--space-3);color:var(--color-neutral-700)">Найближчі вільні</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:4px">
+                    <sc-for list="{{ nearFree }}" as="f" hint-placeholder-count="6">
+                      <button class="btn btn-secondary" onClick="{{ f.onClick }}" style="min-height:44px;min-width:56px">{{ f.id }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <div style="font-size:15px">{{ movingHint }}</div>
+
+              <sc-if value="{{ showPhoto }}">
+                <div style="display:flex;flex-direction:column;gap:var(--space-2);border-top:2px solid var(--color-text);padding-top:var(--space-4)">
+                  <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-500)">Фото постановки</div>
+                  <sc-if value="{{ hasPhoto }}">
+                    {{ photoEl }}
+                    <div style="font-size:13px;color:var(--color-neutral-700)">Знято о {{ photoAt }}</div>
+                  </sc-if>
+                  <sc-if value="{{ noPhoto }}">
+                    <div style="font-size:14px;color:var(--color-neutral-700)">Сфотографуйте авто на новому місці так, щоб було видно розмітку й номер місця.</div>
+                  </sc-if>
+                  <label class="btn btn-secondary btn-block" style="position:relative;margin-top:0;cursor:pointer">{{ photoBtn }}<input type="file" accept="image/*" capture="environment" onChange="{{ onPhoto }}" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none"></label>
+                </div>
+              </sc-if>
+
+              <button class="btn btn-primary btn-block" onClick="{{ finish }}" disabled="{{ cannotFinish }}">Завершити операцію</button>
+              <button class="btn btn-ghost btn-block" onClick="{{ cancel }}">Скасувати: повернути на {{ fromLabel }}</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isDone }}">
+            <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+              <div style="background:var(--color-accent);color:#fff;padding:var(--space-4)">
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-2)">Результат · операція № {{ result.no }}</div>
+                <div style="font-size:30px;font-weight:800;line-height:1.1">{{ result.from }} → {{ result.to }}</div>
+                <div style="font-size:14px;margin-top:4px">Škoda {{ result.model }} · VIN …{{ result.vin }}</div>
+              </div>
+              <sc-if value="{{ result.hasPhoto }}">
+                {{ resultPhotoEl }}
+              </sc-if>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:2px solid var(--color-text);border-bottom:2px solid var(--color-text)">
+                <div style="padding:var(--space-3) 0"><div style="font-size:12px;color:var(--color-neutral-600)">Початок</div><div style="font-size:20px;font-weight:700">{{ result.start }}</div></div>
+                <div style="padding:var(--space-3);border-left:1px solid var(--color-divider)"><div style="font-size:12px;color:var(--color-neutral-600)">Кінець</div><div style="font-size:20px;font-weight:700">{{ result.end }}</div></div>
+                <div style="padding:var(--space-3);border-left:1px solid var(--color-divider)"><div style="font-size:12px;color:var(--color-neutral-600)">Час</div><div style="font-size:20px;font-weight:700">{{ result.duration }}</div></div>
+              </div>
+              <div style="font-size:14px;color:var(--color-neutral-700);display:flex;flex-direction:column;gap:4px">
+                <div>{{ result.fromName }} → {{ result.toName }}</div>
+                <div>Ключ: {{ result.key }}</div>
+                <div>Оператор: {{ result.operator }}</div>
+              </div>
+              <button class="btn btn-primary btn-block" onClick="{{ reset }}">Нова операція</button>
+            </div>
+          </sc-if>
+        </div>
+      </aside>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ isKeys }}">
+    <main style="display:flex;flex-wrap:wrap;flex:1;border-bottom:2px solid var(--color-text)">
+      <section style="flex:1 1 680px;min-width:0;padding:var(--space-6);border-right:2px solid var(--color-text);display:flex;flex-direction:column;gap:var(--space-4)">
+        <div>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-500)">Спільна ключниця · 12 шаф по 100 комірок</div>
+          <div style="font-size:15px;margin-top:4px">Оберіть шафу й комірку. Пошук за VIN у шапці одразу відкриє потрібну комірку.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:2px solid var(--color-text);border-bottom:2px solid var(--color-text)">
+          <div style="padding:var(--space-3) 0"><div style="font-size:28px;font-weight:800">{{ keys.inBox }}</div><div style="font-size:13px">ключів на місці</div></div>
+          <div style="padding:var(--space-3);border-left:1px solid var(--color-divider)"><div style="font-size:28px;font-weight:800">{{ keys.out }}</div><div style="font-size:13px">видано</div></div>
+          <div style="padding:var(--space-3);border-left:1px solid var(--color-divider)"><div style="font-size:28px;font-weight:800">{{ keys.empty }}</div><div style="font-size:13px">порожніх комірок</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:2px;background:var(--color-neutral-300);border:2px solid var(--color-text)">
+          <sc-for list="{{ cabs }}" as="cb" hint-placeholder-count="12">
+            <div role="button" tabindex="0" onClick="{{ cb.onClick }}" style="cursor:pointer;padding:var(--space-2) var(--space-3);background:{{ cb.bg }};color:{{ cb.fg }};box-shadow:{{ cb.ring }}">
+              <div style="font-size:14px;font-weight:800">{{ cb.name }}</div>
+              <div style="font-size:12px;font-variant-numeric:tabular-nums">{{ cb.count }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="border:2px solid var(--color-text)">
+          <div style="padding:var(--space-2) var(--space-3);border-bottom:2px solid var(--color-text);background:var(--color-accent);color:#fff;font-weight:800">{{ keys.cabTitle }}</div>
+          <div style="display:grid;grid-template-columns:repeat({{ keyCols }},minmax(0,1fr));gap:2px;background:var(--color-neutral-300)">
+            <sc-for list="{{ kcells }}" as="k" hint-placeholder-count="100">
+              <button onClick="{{ k.onClick }}" title="{{ k.title }}" style="all:unset;box-sizing:border-box;aspect-ratio:1/0.8;padding:4px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;background:{{ k.bg }};color:{{ k.fg }};box-shadow:{{ k.ring }};min-width:0;overflow:hidden">
+                <span style="font-size:10px;font-weight:700;opacity:0.7">{{ k.n }}</span>
+                <span style="font-size:10px;font-weight:600;line-height:1.1;word-break:break-all">{{ k.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--space-6);flex-wrap:wrap;font-size:13px">
+          <div style="display:flex;gap:8px;align-items:center"><span style="width:14px;height:14px;background:var(--color-surface);border:1px solid var(--color-neutral-400)"></span>Ключ на місці</div>
+          <div style="display:flex;gap:8px;align-items:center"><span style="width:14px;height:14px;background:var(--color-accent-2-300)"></span>Видано</div>
+          <div style="display:flex;gap:8px;align-items:center"><span style="width:14px;height:14px;background:var(--color-bg);border:1px solid var(--color-neutral-400)"></span>Порожньо</div>
+        </div>
+      </section>
+      <aside style="flex:1 1 340px;max-width:100%;padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6)">
+        <sc-if value="{{ keys.none }}" hint-placeholder-val="{{ true }}">
+          <div style="font-size:32px;font-weight:800;line-height:1.05;letter-spacing:-0.02em">Оберіть комірку в ключниці</div>
+        </sc-if>
+        <sc-if value="{{ keys.free }}">
+          <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-500)">Комірка</div>
+            <div style="font-size:28px;font-weight:800">{{ keys.title }}</div>
+            <div style="font-size:15px">Комірка порожня.</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ keys.has }}">
+          <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+            <div>
+              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-500)">Комірка</div>
+              <div style="font-size:28px;font-weight:800">{{ keys.title }}</div>
+            </div>
+            <div style="border-top:2px solid var(--color-text);padding-top:var(--space-4)">
+              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-500)">Автомобіль</div>
+              <div style="font-size:32px;font-weight:800">Škoda {{ keys.car.model }}</div>
+              <div style="font-size:14px;letter-spacing:0.04em">VIN {{ keys.car.vin }} · {{ keys.car.color }}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;border-top:2px solid var(--color-text);border-bottom:2px solid var(--color-text)">
+              <div style="padding:var(--space-3) 0"><div style="font-size:12px;color:var(--color-neutral-600)">Де стоїть</div><div style="font-size:22px;font-weight:800">{{ keys.place }}</div><div style="font-size:12px">{{ keys.placeName }}</div></div>
+              <div style="padding:var(--space-3);border-left:1px solid var(--color-divider)"><div style="font-size:12px;color:var(--color-neutral-600)">Статус ключа</div><div style="font-size:18px;font-weight:700">{{ keys.status }}</div></div>
+            </div>
+            <sc-if value="{{ keys.canShow }}"><button class="btn btn-primary btn-block" onClick="{{ keys.show }}">Показати авто на карті</button></sc-if>
+          </div>
+        </sc-if>
+      </aside>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ isLog }}">
+    <main style="padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-4)">
+      <div style="display:flex;align-items:baseline;gap:var(--space-4)">
+        <div style="font-size:40px;font-weight:800;letter-spacing:-0.02em">Журнал операцій</div>
+        <div style="font-size:14px;color:var(--color-neutral-600)">{{ logCount }} записів</div>
+      </div>
+      <div style="display:flex;flex-direction:column;border-top:2px solid var(--color-text)">
+        <sc-for list="{{ log }}" as="r" hint-placeholder-count="3">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-6);padding:var(--space-3) 0;border-bottom:1px solid var(--color-divider)">
+            <div style="flex:0 0 56px;height:42px;background:var(--color-surface)">{{ r.photoEl }}</div>
+            <div style="flex:1 1 220px;min-width:0"><div style="font-weight:800">№ {{ r.no }} · Škoda {{ r.model }} <span style="font-weight:400">…{{ r.vin }}</span></div><div style="font-size:15px">{{ r.from }} → {{ r.to }}</div></div>
+            <div style="flex:0 1 170px;font-size:13px">{{ r.start }} – {{ r.end }} · <b>{{ r.duration }}</b></div>
+            <div style="flex:0 1 170px;font-size:13px">Ключ: {{ r.key }}</div>
+            <div style="flex:0 1 120px;font-size:13px">{{ r.operator }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </main>
+  </sc-if>
+
+  <sc-if value="{{ dialogOpen }}">
+    <div class="dialog-backdrop" style="z-index:50">
+      <div class="dialog" style="width:min(480px,100%);background:var(--color-bg);border:2px solid var(--color-text)">
+        <div class="dialog-title">{{ dlg.title }}</div>
+        <sc-if value="{{ dlg.isCreate }}">
+          <div class="field" style="margin:0">
+            <label>Тип</label>
+            <div class="seg">
+              <label class="seg-opt"><input type="radio" name="dlg-type" checked="{{ dlg.isTemp }}" onChange="{{ dlg.setTemp }}">Тимчасовий майданчик</label>
+              <label class="seg-opt"><input type="radio" name="dlg-type" checked="{{ dlg.isTransit }}" onChange="{{ dlg.setTransit }}">Транзитна зона</label>
+            </div>
+          </div>
+        </sc-if>
+        <div class="field" style="margin:0">
+          <label>Назва</label>
+          <input class="input" value="{{ dlg.name }}" onChange="{{ dlg.onName }}" placeholder="Поле за терміналом" style="width:100%;box-sizing:border-box">
+        </div>
+        <div class="field" style="margin:0">
+          <label>Площа, м²</label>
+          <input class="input" type="number" min="25" step="25" value="{{ dlg.area }}" onChange="{{ dlg.onArea }}" style="width:100%;box-sizing:border-box">
+        </div>
+        <div class="field" style="margin:0">
+          <label>Пріоритет</label>
+          <div class="seg">
+            <sc-for list="{{ dlg.pris }}" as="p" hint-placeholder-count="3">
+              <label class="seg-opt"><input type="radio" name="dlg-pri" checked="{{ p.on }}" onChange="{{ p.set }}">{{ p.label }}</label>
+            </sc-for>
+          </div>
+        </div>
+        <div style="font-size:15px;border-top:2px solid var(--color-text);padding-top:var(--space-3)">Місткість: <b>{{ dlg.cap }}</b> місць <span style="color:var(--color-neutral-600);font-size:13px">· {{ dlg.note }}</span></div>
+        <sc-if value="{{ dlg.hasError }}">
+          <div style="font-size:14px;background:var(--color-accent-2-100);color:var(--color-accent-2-900);padding:var(--space-2) var(--space-3)">{{ dlg.error }}</div>
+        </sc-if>
+        <div class="dialog-actions" style="justify-content:flex-start">
+          <button class="btn btn-primary" onClick="{{ dlg.save }}" disabled="{{ dlg.cannotSave }}">Зберегти</button>
+          <button class="btn btn-secondary" onClick="{{ dlg.close }}">Скасувати</button>
+          <div style="flex:1"></div>
+          <sc-if value="{{ dlg.canDelete }}"><button class="btn btn-ghost" onClick="{{ dlg.remove }}">Видалити зону</button></sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ lightboxOpen }}">
+    <div class="dialog-backdrop" onClick="{{ closeLightbox }}" style="z-index:60;cursor:zoom-out;background:color-mix(in srgb, var(--color-neutral-900) 88%, transparent)">
+      <div style="display:flex;flex-direction:column;gap:var(--space-3);align-items:flex-start;max-width:min(1000px,100%)">
+        {{ lightboxEl }}
+        <div style="display:flex;gap:var(--space-4);align-items:center;width:100%;color:#fff;flex-wrap:wrap">
+          <div style="flex:1 1 auto;font-size:15px;font-weight:700">{{ lightboxCaption }}</div>
+          <button class="btn btn-secondary" onClick="{{ closeLightbox }}" style="color:#fff;border-color:#fff;min-height:44px">Закрити ✕</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ mobBar.show }}">
+    <div style="position:fixed;left:0;right:0;bottom:64px;z-index:40;background:var(--color-bg);border-top:2px solid var(--color-text);padding:var(--space-2) var(--space-4);display:flex;gap:var(--space-3);align-items:center;box-shadow:var(--shadow-md)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-accent-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ mobBar.kicker }}</div>
+        <div style="font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ mobBar.title }}</div>
+      </div>
+      <sc-if value="{{ mobBar.isPhoto }}">
+        <label class="btn btn-primary" style="position:relative;min-height:48px;cursor:pointer;color:#fff">Зробити фото<input type="file" accept="image/*" capture="environment" onChange="{{ onPhoto }}" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none"></label>
+      </sc-if>
+      <sc-if value="{{ mobBar.isBtn }}">
+        <button class="btn btn-primary" onClick="{{ mobBar.action }}" style="min-height:48px">{{ mobBar.label }}</button>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ mob }}">
+    <nav style="position:fixed;left:0;right:0;bottom:0;height:64px;z-index:41;background:var(--color-accent);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:2px solid var(--color-text)">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+        <div role="button" tabindex="0" onClick="{{ t.onClick }}" style="cursor:pointer;display:flex;align-items:center;padding:0 var(--space-3);color:#fff;font-size:13px;font-weight:700;border-top:4px solid {{ t.line }}">{{ t.label }}</div>
+      </sc-for>
+    </nav>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;cellLabel&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;VIN&quot;,&quot;Модель&quot;],&quot;default&quot;:&quot;VIN&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;requirePhoto&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;liveFeed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const KEY = 'eurolog-ua-v1';
+const LET = 'ABCDEFGHIJKLMNOPQRST';
+const pad = n => String(n).padStart(2, '0');
+const hms = t => { const d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
+const dur = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); };
+const ago = ms => { const m = Math.floor(ms / 60000); return m < 1 ? 'щойно' : m < 60 ? m + ' хв тому' : Math.floor(m / 60) + ' год тому'; };
+const plural = n => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? 'зона' : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? 'зони' : 'зон'; };
+const PRI = ['Високий', 'Звичайний', 'Низький'];
+const PRI_CLASS = ['tag-accent-2', 'tag-neutral', 'tag-outline'];
+const GROUPS = [
+  { id: '3.1', name: 'Контрольовані склади ТОВ «Євро Лоджистікс» (Соломоново)' },
+  { id: '3.2', name: 'Тимчасові майданчики зберігання', editable: true },
+  { id: '3.3', name: 'Транзитні зони', editable: true },
+  { id: '3.4', name: 'Зовнішні партнерські склади' },
+  { id: '3.5', name: 'Дилерські майданчики (External Yard)' },
+  { id: '3.6', name: 'Rail yard / зона вагонного приймання' },
+  { id: '3.7', name: 'Service / Repair zone' },
+  { id: '3.8', name: 'Quarantine / Hold area' },
+];
+const M2 = 25, CABS = 12;
+const MODELS = ['Fabia', 'Scala', 'Octavia', 'Kamiq', 'Karoq', 'Kodiaq', 'Superb', 'Enyaq', 'Elroq'];
+const COLORS = ['білий', 'чорний', 'сірий', 'сріблястий', 'синій', 'червоний'];
+const CAR = { 'білий': 'var(--color-neutral-100)', 'сріблястий': 'var(--color-neutral-300)', 'сірий': 'var(--color-neutral-500)', 'синій': 'var(--color-neutral-600)', 'червоний': 'var(--color-neutral-700)', 'чорний': 'var(--color-neutral-900)' };
+const keyLabel = k => k ? 'Шафа ' + pad(+k.split('-')[0]) + ' · комірка ' + pad(+k.split('-')[1]) : '';
+const locLabel = l => l ? l.zone + (l.spot ? ' · ' + l.spot : '') : '—';
+const layoutFor = cap => { const per = Math.max(5, Math.min(15, Math.ceil(Math.sqrt(cap * 0.7)))); let rows = Math.ceil(cap / per); if (rows % 2) rows++; return { rows: Math.min(20, rows), per }; };
+const spotIds = z => { const out = []; for (let r = 0; r < z.rows && out.length < z.cap; r++) for (let n = 1; n <= z.per && out.length < z.cap; n++) out.push(LET[r] + n); return out; };
+const makeVin = rnd => { const CH = 'ABCDEFGHJKLMNPRSTUVWXYZ0123456789'; let s = 'TMB'; for (let i = 0; i < 8; i++) s += CH[Math.floor(rnd() * CH.length)]; for (let i = 0; i < 6; i++) s += Math.floor(rnd() * 10); return s; };
+const img = (src, big, onClick) => React.createElement('img', { src, alt: 'Фото постановки авто', onClick, title: 'Натисніть, щоб збільшити', style: big ? { width: '100%', height: 220, objectFit: 'cover', display: 'block', border: '2px solid var(--color-text)', boxSizing: 'border-box', cursor: 'zoom-in' } : { width: 56, height: 42, objectFit: 'cover', display: 'block', border: '1px solid var(--color-divider)', cursor: 'zoom-in' } });
+const bigImg = src => React.createElement('img', { src, alt: 'Фото постановки авто', style: { maxWidth: '100%', maxHeight: '78vh', objectFit: 'contain', display: 'block', border: '2px solid var(--color-bg)' } });
+const ROAD = 3.1;
+const geom = sid => { const r = LET.indexOf(sid[0]), n = +sid.slice(1), p = r >> 1, col = r % 2; return { cx: 1.6 + p * 5.6 + col * 2 + 1, cy: 3 + n + 0.5, ax: col ? (p + 1) * 5.6 + 0.8 : p * 5.6 + 0.8 }; };
+const pGate = s => [[0.8, 1], [0.8, ROAD], [s.ax, ROAD], [s.ax, s.cy], [s.cx, s.cy]];
+const pSpots = (a, b) => a.ax === b.ax ? [[a.cx, a.cy], [a.ax, a.cy], [a.ax, b.cy], [b.cx, b.cy]] : [[a.cx, a.cy], [a.ax, a.cy], [a.ax, ROAD], [b.ax, ROAD], [b.ax, b.cy], [b.cx, b.cy]];
+const plen = pts => pts.reduce((s, p, i) => i ? s + Math.abs(p[0] - pts[i - 1][0]) + Math.abs(p[1] - pts[i - 1][1]) : 0, 0);
+
+function seed() {
+  let a = 11; const r = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const pick = arr => arr[Math.floor(r() * arr.length)];
+  const now = Date.now();
+  const zones = [
+    { id: 'S1', group: '3.1', name: 'Соломоново · зона S1', cap: 300, rows: 20, per: 15, pri: 0, strip: 'В’ЇЗД · КПП', fill: 0.82 },
+    { id: 'S2', group: '3.1', name: 'Соломоново · зона S2', cap: 300, rows: 20, per: 15, pri: 1, strip: 'В’ЇЗД · КПП', fill: 0.74 },
+    { id: 'S3', group: '3.1', name: 'Соломоново · зона S3', cap: 300, rows: 20, per: 15, pri: 1, strip: 'В’ЇЗД · КПП', fill: 0.61 },
+    { id: 'T1', group: '3.2', name: 'Майданчик-1', area: 2500, cap: 100, rows: 10, per: 10, pri: 1, strip: 'В’ЇЗД', fill: 0.8 },
+    { id: 'T2', group: '3.2', name: 'Поле біля траси М-06', area: 1500, cap: 60, ...layoutFor(60), pri: 2, strip: 'В’ЇЗД', fill: 0.5 },
+    { id: 'X1', group: '3.3', name: 'Транзит · ворота 2', area: 1000, cap: 40, ...layoutFor(40), pri: 0, strip: 'ВОРОТА 2', fill: 0.4 },
+    { id: 'R1', group: '3.6', name: 'Рампа вивантаження вагонів', cap: 120, rows: 8, per: 15, pri: 0, strip: 'ЗАЛІЗНИЦЯ · ВИВАНТАЖЕННЯ', fill: 0.55 },
+    { id: 'SV', group: '3.7', name: 'Сервіс і ремонт', cap: 40, rows: 4, per: 10, pri: 1, strip: 'БОКСИ СТО', fill: 0.6 },
+    { id: 'QH', group: '3.8', name: 'Карантин / утримання', cap: 30, rows: 2, per: 15, pri: 2, strip: 'ОГОРОЖА', fill: 0.4 },
+  ];
+  ['Київ', 'Бровари', 'Бориспіль', 'Житомир', 'Вінниця', 'Львів', 'Ужгород', 'Мукачево', 'Одеса', 'Дніпро', 'Харків', 'Полтава', 'Черкаси', 'Рівне']
+    .forEach((c, i) => zones.push({ id: 'P' + pad(i + 1), group: '3.4', name: 'Склад партнера · ' + c, cap: 40 + Math.floor(r() * 11) * 10, pri: 1, ext: true, synced: now - Math.floor(r() * 240e3), fill: 0.35 + r() * 0.55 }));
+  ['Київ · Оболонь', 'Київ · Теремки', 'Київ · Лівий берег', 'Львів', 'Одеса', 'Дніпро', 'Харків', 'Запоріжжя', 'Вінниця', 'Івано-Франківськ', 'Тернопіль', 'Луцьк', 'Хмельницький', 'Чернівці', 'Миколаїв', 'Ужгород']
+    .forEach((c, i) => zones.push({ id: 'D' + pad(i + 1), group: '3.5', name: 'Дилер · ' + c, cap: 20 + Math.floor(r() * 7) * 10, pri: i < 3 ? 0 : 1, ext: true, synced: now - Math.floor(r() * 240e3), fill: 0.35 + r() * 0.55 }));
+  const off = zones.find(z => z.id === 'P07'); off.offline = true; off.synced = now - 47 * 60e3;
+  const slots = []; for (let c = 1; c <= CABS; c++) for (let n = 1; n <= 100; n++) slots.push(c + '-' + n);
+  for (let i = slots.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [slots[i], slots[j]] = [slots[j], slots[i]]; }
+  const cars = {}; let nid = 1, k = 0;
+  const mk = (zone, spot, key) => { const id = 'c' + nid++; cars[id] = { id, vin: makeVin(r), model: pick(MODELS), color: pick(COLORS), zone, spot, key }; };
+  zones.forEach(z => {
+    if (z.ext) { const n = Math.round(z.cap * z.fill); for (let i = 0; i < n; i++) mk(z.id, null, null); }
+    else spotIds(z).forEach(s => { if (r() < z.fill) mk(z.id, s, slots[k++]); });
+    delete z.fill;
+  });
+  const log = [
+    { no: 3, model: 'Kodiaq', vin: '418207', from: 'R1 · B6', to: 'S1 · D11', fromName: 'Рампа вивантаження вагонів', toName: 'Соломоново · зона S1', start: hms(now - 3600e3), end: hms(now - 3600e3 + 414e3), duration: '06:54', key: 'Шафа 03 · комірка 41', operator: 'Петренко С.' },
+    { no: 2, model: 'Octavia', vin: '093315', from: 'S2 · K3', to: 'D01', fromName: 'Соломоново · зона S2', toName: 'Дилер · Київ · Оболонь', start: hms(now - 7200e3), end: hms(now - 7200e3 + 158e3), duration: '02:38', key: 'передано з авто', operator: 'Іваненко А.' },
+    { no: 1, model: 'Kamiq', vin: '552740', from: 'R1 · A2', to: 'SV · B4', fromName: 'Рампа вивантаження вагонів', toName: 'Сервіс і ремонт', start: hms(now - 9800e3), end: hms(now - 9800e3 + 301e3), duration: '05:01', key: 'Шафа 08 · комірка 17', operator: 'Іваненко А.' },
+  ];
+  return { zones, cars, log, nid, operator: 'Іваненко А.', op: { phase: 'idle' }, result: null, tab: 'zones', zoneView: 'S1', view: 'aerial', routeOn: true };
+}
+
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    let s = null; try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+    this.state = Object.assign(seed(), s || {}, { now: Date.now(), query: '', dialog: null, keySel: null, keyCab: 1, w: window.innerWidth, spotInput: '', spotErr: '' });
+  }
+  mapRef = React.createRef();
+  componentDidMount() {
+    this.t1 = setInterval(() => this.setState({ now: Date.now() }), 1000);
+    this.t2 = setInterval(() => { if (this.props.liveFeed ?? true) this.feed(); }, 9000);
+    this.onResize = () => this.setState({ w: window.innerWidth });
+    window.addEventListener('resize', this.onResize);
+    this.onKey = e => { if (e.key === 'Escape' && this.state.lightbox) this.setState({ lightbox: null }); };
+    window.addEventListener('keydown', this.onKey);
+    this.focusMap();
+  }
+  componentDidUpdate() { this.focusMap(); }
+  componentWillUnmount() { clearInterval(this.t1); clearInterval(this.t2); window.removeEventListener('resize', this.onResize); window.removeEventListener('keydown', this.onKey); }
+  focusMap() {
+    const el = this.mapRef.current, { op, zoneView, zones, view, w, tab } = this.state;
+    if (!el) { this._fk = null; return; }
+    const sid = op.to && op.to.zone === zoneView && op.to.spot ? op.to.spot : (op.phase !== 'idle' && op.from && op.from.zone === zoneView ? op.from.spot : null);
+    const k = [tab, zoneView, sid, view, w].join('|');
+    if (k === this._fk) return;
+    this._fk = k;
+    const z = zones.find(x => x.id === zoneView);
+    if (!sid || !z || z.ext) return;
+    const W = 1.6 + z.rows / 2 * 5.6;
+    el.scrollLeft = Math.max(0, geom(sid).cx / W * el.scrollWidth - el.clientWidth / 2);
+  }
+  save(patch) {
+    this.setState(patch, () => {
+      const { zones, cars, log, nid, operator, op, result, tab, zoneView, view, routeOn } = this.state;
+      try { localStorage.setItem(KEY, JSON.stringify({ zones, cars, log, nid, operator, op, result, tab, zoneView, view, routeOn })); } catch (e) {}
+    });
+  }
+  feed() {
+    const { zones, cars, op } = this.state;
+    const live = zones.filter(z => z.ext && !z.offline);
+    if (!live.length) return;
+    const z = live[Math.floor(Math.random() * live.length)];
+    const here = Object.values(cars).filter(c => c.zone === z.id && c.id !== op.carId);
+    const nc = { ...cars }; let nid = this.state.nid;
+    if (!here.length || (Math.random() < 0.5 && here.length < z.cap)) {
+      const id = 'c' + nid++;
+      nc[id] = { id, vin: makeVin(Math.random), model: MODELS[Math.floor(Math.random() * MODELS.length)], color: COLORS[Math.floor(Math.random() * COLORS.length)], zone: z.id, spot: null, key: null };
+    } else delete nc[here[Math.floor(Math.random() * here.length)].id];
+    const beat = new Set([z.id]); for (let i = 0; i < 4; i++) beat.add(live[Math.floor(Math.random() * live.length)].id);
+    const t = Date.now();
+    this.save({ cars: nc, nid, zones: zones.map(x => beat.has(x.id) ? { ...x, synced: t } : x) });
+  }
+  idx() {
+    const occ = {}, byZone = {}, byKey = {}, cars = this.state.cars;
+    for (const id in cars) { const c = cars[id]; if (c.zone) { (byZone[c.zone] = byZone[c.zone] || []).push(c); if (c.spot) occ[c.zone + '|' + c.spot] = c; } if (c.key) byKey[c.key] = c; }
+    return { occ, byZone, byKey };
+  }
+  selectCar(id) {
+    const c = this.state.cars[id];
+    if (!c || !c.zone || this.state.op.phase === 'moving') return;
+    this.save({ op: { phase: 'selected', carId: id, from: { zone: c.zone, spot: c.spot } }, result: null });
+  }
+  goCar(c) {
+    const patch = { tab: 'move', zoneView: c.zone || this.state.zoneView };
+    if (this.state.op.phase !== 'moving' && c.zone) Object.assign(patch, { op: { phase: 'selected', carId: c.id, from: { zone: c.zone, spot: c.spot } }, result: null });
+    this.save(patch);
+  }
+  pick(c) {
+    this.setState({ query: '' });
+    if (this.state.tab === 'keys' && c.key) { this.setState({ keyCab: +c.key.split('-')[0], keySel: c.key }); return; }
+    this.goCar(c);
+  }
+  clickSpot(zoneId, spot, c) {
+    const { op } = this.state;
+    if (op.phase === 'moving') {
+      const isOrigin = op.from.zone === zoneId && op.from.spot === spot;
+      if (!c || isOrigin) this.save({ op: { ...op, to: isOrigin ? null : { zone: zoneId, spot } } });
+      return;
+    }
+    if (c) this.selectCar(c.id);
+  }
+  start = () => {
+    const { op, cars } = this.state;
+    this.save({ op: { ...op, phase: 'moving', start: Date.now(), to: null, photo: null }, cars: { ...cars, [op.carId]: { ...cars[op.carId], zone: null, spot: null } } });
+  };
+  cancel = () => {
+    const { op, cars } = this.state;
+    this.save({ op: { phase: 'idle' }, cars: { ...cars, [op.carId]: { ...cars[op.carId], zone: op.from.zone, spot: op.from.spot } }, zoneView: op.from.zone });
+  };
+  setDest(zid) {
+    const { op, zones } = this.state, z = zones.find(x => x.id === zid);
+    this.save({ zoneView: zid, op: { ...op, to: z.ext ? { zone: zid, spot: null } : null } });
+  }
+  onPhoto = e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const url = URL.createObjectURL(f), img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, 640 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      const op = this.state.op;
+      if (op.phase === 'moving') this.save({ op: { ...op, photo: cv.toDataURL('image/jpeg', 0.72), photoAt: Date.now() } });
+    };
+    img.src = url; e.target.value = '';
+  };
+  finish = () => {
+    const { op, cars, log, operator, zones } = this.state;
+    const needPhoto = this.props.requirePhoto ?? true;
+    if (op.phase !== 'moving' || !op.to || (needPhoto && !op.photo)) return;
+    const dz = zones.find(z => z.id === op.to.zone), zn = id => (zones.find(z => z.id === id) || {}).name || '';
+    const c = { ...cars[op.carId], zone: op.to.zone, spot: op.to.spot };
+    if (dz.ext) c.key = null;
+    else if (!c.key) {
+      const used = new Set(Object.values(cars).map(x => x.key).filter(Boolean));
+      outer: for (let cb = 1; cb <= CABS; cb++) for (let n = 1; n <= 100; n++) if (!used.has(cb + '-' + n)) { c.key = cb + '-' + n; break outer; }
+    }
+    const end = Date.now();
+    const rec = { no: (log[0] ? log[0].no : 0) + 1, model: c.model, vin: c.vin.slice(-6), from: locLabel(op.from), to: locLabel(op.to), fromName: zn(op.from.zone), toName: zn(op.to.zone), start: hms(op.start), end: hms(end), duration: dur(end - op.start), key: c.key ? keyLabel(c.key) : 'передано з авто', operator, photo: op.photo || null, hasPhoto: !!op.photo };
+    const nlog = [rec, ...log].map((x, i) => i < 30 ? x : { ...x, photo: null, hasPhoto: false });
+    this.save({ cars: { ...cars, [c.id]: c }, log: nlog, op: { phase: 'done', carId: c.id, from: op.from, to: op.to }, result: rec, zoneView: op.to.zone });
+  };
+  applySpot = () => {
+    const S = this.state, z = S.zones.find(x => x.id === S.zoneView), sid = S.spotInput.trim().toUpperCase().replace(/\s/g, '');
+    if (!z || z.ext || S.op.phase !== 'moving') return;
+    if (!spotIds(z).includes(sid)) { this.setState({ spotErr: 'У зоні ' + z.id + ' немає місця ' + (sid || '—') + '.' }); return; }
+    if (S.op.from.zone === z.id && S.op.from.spot === sid) { this.setState({ spotErr: 'Це початкове місце авто.' }); return; }
+    if (this.idx().occ[z.id + '|' + sid]) { this.setState({ spotErr: 'Місце ' + sid + ' зайняте.' }); return; }
+    this.setState({ spotErr: '', spotInput: '' });
+    this.save({ op: { ...S.op, to: { zone: z.id, spot: sid } } });
+  };
+  reset = () => this.save({ op: { phase: 'idle' }, result: null });
+  openCreate(group) { this.setState({ dialog: { mode: 'create', group, name: '', area: 1000, pri: 1 } }); }
+  openEdit(z) { this.setState({ dialog: { mode: 'edit', id: z.id, group: z.group, name: z.name, area: z.area || z.cap * M2, pri: z.pri } }); }
+  dset(p) { this.setState(s => ({ dialog: { ...s.dialog, ...p } })); }
+  saveDialog() {
+    const d = this.state.dialog, { zones, cars } = this.state;
+    const cap = Math.max(1, Math.min(300, Math.floor((+d.area || 0) / M2)));
+    if (d.mode === 'create') {
+      const pre = d.group === '3.2' ? 'T' : 'X'; let n = 1; while (zones.some(z => z.id === pre + n)) n++;
+      const z = { id: pre + n, group: d.group, name: d.name.trim(), area: +d.area, cap, ...layoutFor(cap), pri: d.pri, strip: 'В’ЇЗД' };
+      this.save({ zones: [...zones, z], dialog: null });
+      return;
+    }
+    const old = zones.find(z => z.id === d.id);
+    const z = { ...old, name: d.name.trim(), area: +d.area, cap, ...(cap === old.cap ? {} : layoutFor(cap)), pri: d.pri };
+    const valid = spotIds(z), vs = new Set(valid), nc = { ...cars };
+    const here = Object.values(cars).filter(c => c.zone === z.id);
+    const taken = new Set(here.filter(c => vs.has(c.spot)).map(c => c.spot));
+    const free = valid.filter(s => !taken.has(s));
+    here.filter(c => !vs.has(c.spot)).forEach(c => { nc[c.id] = { ...c, spot: free.shift() }; });
+    this.save({ zones: zones.map(x => x.id === z.id ? z : x), cars: nc, dialog: null });
+  }
+  removeZone(id) {
+    const S = this.state;
+    this.save({ zones: S.zones.filter(z => z.id !== id), dialog: null, zoneView: S.zoneView === id ? 'S1' : S.zoneView });
+  }
+
+  renderVals() {
+    const S = this.state, { zones, cars, log, op, result, now, operator, query } = S;
+    const tab = S.tab || 'zones';
+    const { occ, byZone, byKey } = this.idx();
+    const zmap = {}; zones.forEach(z => { zmap[z.id] = z; });
+    const used = id => (byZone[id] || []).length;
+    const zname = id => zmap[id] ? zmap[id].name : '';
+    const mode = this.props.cellLabel ?? 'VIN';
+    const needPhoto = this.props.requirePhoto ?? true;
+    const q = query.trim().toUpperCase().replace(/\s/g, '');
+    const vmatch = c => q.length >= 3 && c.vin.includes(q);
+    const moving = op.phase === 'moving';
+    const car = op.carId ? cars[op.carId] : null;
+    const mob = (S.w || 1200) < 760;
+
+    const zrow = z => {
+      const u = used(z.id), off = z.ext && z.offline;
+      return {
+        id: z.id, name: z.name, pri: PRI[z.pri], priClass: PRI_CLASS[z.pri], used: u, cap: z.cap, free: Math.max(0, z.cap - u), pct: Math.min(100, Math.round(u / z.cap * 100)),
+        info: z.ext ? (off ? '● немає зв’язку · ' + ago(now - z.synced) : '● онлайн · ' + ago(now - z.synced)) : (z.area ? z.area.toLocaleString('ru-RU') + ' м²' : 'карта місць'),
+        infoColor: z.ext ? (off ? 'var(--color-neutral-500)' : 'var(--color-accent-2-800)') : 'var(--color-neutral-700)',
+        editable: z.group === '3.2' || z.group === '3.3', edit: () => this.openEdit(z), open: () => this.save({ tab: 'move', zoneView: z.id }),
+      };
+    };
+    const groups = GROUPS.map(g => {
+      const zs = zones.filter(z => z.group === g.id), u = zs.reduce((a, z) => a + used(z.id), 0), c = zs.reduce((a, z) => a + z.cap, 0);
+      return { id: g.id, name: g.name, editable: !!g.editable, summary: zs.length + ' ' + plural(zs.length) + ' · ' + u + ' / ' + c, add: () => this.openCreate(g.id), rows: zs.map(zrow) };
+    });
+    const own = zones.filter(z => !z.ext), ext = zones.filter(z => z.ext);
+    const ownCap = own.reduce((a, z) => a + z.cap, 0), ownUsed = own.reduce((a, z) => a + used(z.id), 0);
+    const tot = { ownCap, ownUsed, ownFree: ownCap - ownUsed, extCap: ext.reduce((a, z) => a + z.cap, 0), extUsed: ext.reduce((a, z) => a + used(z.id), 0), online: ext.filter(z => !z.offline).length, extCount: ext.length, ops: log.length };
+
+    const zvz = zmap[S.zoneView] || zones[0];
+    const zvU = used(zvz.id);
+    const zv = { id: zvz.id, name: zvz.name, group: zvz.group, groupName: (GROUPS.find(g => g.id === zvz.group) || {}).name, used: zvU, free: Math.max(0, zvz.cap - zvU), cap: zvz.cap, per: zvz.per, strip: zvz.strip || 'В’ЇЗД',
+      dot: zvz.offline ? 'var(--color-neutral-500)' : 'var(--color-accent-2-600)', info: zvz.ext ? (zvz.offline ? 'Немає зв’язку · останнє оновлення ' + ago(now - zvz.synced) : 'Онлайн · оновлено ' + ago(now - zvz.synced)) : '' };
+    const mapped = !zvz.ext, view = S.view || 'aerial';
+    let spots = [], map = {}, W = 1, H = 1;
+    if (mapped) {
+      const P = zvz.rows / 2; W = 1.6 + P * 5.6; H = zvz.per + 6;
+      map = { minW: Math.round(W * (mob ? 44 : 22)), aspect: W + ' / ' + H, viewBox: '0 0 ' + W + ' ' + H, stripH: 2.2 / H * 100, gateW: 1.6 / W * 100, stripL: 1.6 / W * 100 + 1, topDash: ROAD / H * 100, botDash: (H - 1) / H * 100, arrowT: (4 + zvz.per / 2 - 0.6) / H * 100, spotW: 2 / W * 100, spotH: 100 / H,
+        aisles: Array.from({ length: P + 1 }, (_, p) => ({ l: p * 5.6 / W * 100, arrow: p % 2 ? '↑' : '↓' })) };
+      spots = spotIds(zvz).map(sid => {
+        const r = LET.indexOf(sid[0]), n = +sid.slice(1), p = r >> 1, col = r % 2, c = occ[zvz.id + '|' + sid];
+        const isOrigin = moving && op.from.zone === zvz.id && op.from.spot === sid;
+        const isTarget = moving && op.to && op.to.zone === zvz.id && op.to.spot === sid;
+        const isSel = c && op.carId === c.id && (op.phase === 'selected' || op.phase === 'done');
+        const match = c && vmatch(c);
+        let carBg = c ? CAR[c.color] || 'var(--color-neutral-400)' : '', spotBg = 'transparent', ring = 'none', tag = '', fg = 'var(--color-neutral-400)';
+        let sBg = c ? 'var(--color-surface)' : 'var(--color-bg)', sFg = c ? 'var(--color-text)' : 'var(--color-neutral-500)', sRing = 'none', sLabel = c ? (mode === 'Модель' ? c.model : c.vin.slice(-6)) : 'вільно';
+        if (isSel) { carBg = 'var(--color-accent-2)'; ring = 'inset 0 0 0 2px var(--color-accent-2)'; sBg = 'var(--color-accent)'; sFg = '#fff'; }
+        if (isOrigin) { ring = 'inset 0 0 0 2px var(--color-accent-2-400)'; tag = 'У ДОРОЗІ'; fg = 'var(--color-accent-2-300)'; sFg = 'var(--color-accent-2-800)'; sRing = 'inset 0 0 0 2px var(--color-accent-2-600)'; sLabel = 'у дорозі'; }
+        if (isTarget) { spotBg = 'var(--color-accent-2-800)'; ring = 'inset 0 0 0 2px var(--color-accent-2)'; tag = 'СЮДИ'; fg = 'var(--color-accent-2)'; sBg = 'var(--color-accent-2-200)'; sFg = 'var(--color-accent-2-900)'; sRing = 'inset 0 0 0 2px var(--color-accent-2-700)'; sLabel = '→ сюди'; }
+        if (match) { ring = 'inset 0 0 0 3px var(--color-neutral-100)'; sRing = 'inset 0 0 0 3px var(--color-text)'; }
+        const clickable = moving ? (!c || isOrigin) : !!c;
+        return { id: sid, l: (1.6 + p * 5.6 + col * 2) / W * 100, t: (3 + n) / H * 100, dir: col ? 'row-reverse' : 'row', hasCar: !!c, noCar: !c, carBg, spotBg, ring, tag, fg, sBg, sFg, sRing, sLabel,
+          cursor: clickable ? 'pointer' : 'default', title: c ? 'Škoda ' + c.model + ' · VIN ' + c.vin : zvz.id + ' · ' + sid + ' — вільно', onClick: () => this.clickSpot(zvz.id, sid, c) };
+      });
+    }
+    const extCars = mapped ? [] : (byZone[zvz.id] || []).map(c => ({ vin: c.vin, model: 'Škoda ' + c.model, color: c.color, canPick: !moving, pick: () => this.selectCar(c.id), bg: car && car.id === c.id ? 'var(--color-accent-2-100)' : 'transparent' }));
+
+    let route = { has: false, draw: false, canDraw: false };
+    if (op.phase === 'selected' || moving) {
+      const fromZ = zmap[op.from.zone] || zvz, toZ = op.to ? zmap[op.to.zone] : null;
+      let pts = null, title, startLabel = '', walk = op.phase === 'selected';
+      if (walk) {
+        title = 'КПП → ' + locLabel(op.from);
+        if (mapped && zvz.id === op.from.zone && op.from.spot) { pts = pGate(geom(op.from.spot)); startLabel = 'Ви тут · КПП'; }
+        else if (fromZ.ext) title = 'Маршрут до: ' + fromZ.name;
+      } else {
+        title = op.to ? locLabel(op.from) + ' → ' + locLabel(op.to) : 'З ' + locLabel(op.from) + ': оберіть місце';
+        if (mapped && zvz.id === op.from.zone && op.from.spot) {
+          const a = geom(op.from.spot); startLabel = 'Авто';
+          if (op.to && op.to.zone === zvz.id && op.to.spot) pts = pSpots(a, geom(op.to.spot));
+          else if (op.to) pts = pGate(a).reverse();
+        } else if (mapped && op.to && op.to.zone === zvz.id && op.to.spot) { pts = pGate(geom(op.to.spot)); startLabel = 'В’їзд'; }
+      }
+      const m = pts ? Math.round(plen(pts) * 2.5) : 0;
+      const dz = !walk && toZ ? toZ : fromZ;
+      const dest = dz.ext ? dz.name.split(' · ').slice(1).join(', ') + ', Україна' : 'Соломоново, Закарпатська область, Україна';
+      const st = pts ? pts[0] : [0, 0], en = pts ? pts[pts.length - 1] : [0, 0];
+      route = { has: true, canDraw: !!pts, draw: !!pts && !!S.routeOn && view === 'aerial', title, startLabel,
+        meta: pts ? m + ' м · приблизно ' + Math.max(1, Math.round(m / (walk ? 1.3 : 2.8) / 60)) + ' хв ' + (walk ? 'пішки' : 'на авто майданчиком') : (dz.ext ? 'Дорога до зовнішнього складу: відкрийте Google Карти.' : 'Відкрийте зону на карті, щоб побачити маршрут.'),
+        points: pts ? pts.map(p => p[0].toFixed(2) + ',' + p[1].toFixed(2)).join(' ') : '', sx: st[0] / W * 100, sy: st[1] / H * 100, ex: en[0] / W * 100, ey: en[1] / H * 100,
+        toggleLabel: S.routeOn && view === 'aerial' ? 'Сховати маршрут' : 'Побудувати маршрут', toggle: () => this.save(S.routeOn && view === 'aerial' ? { routeOn: false } : { routeOn: true, view: 'aerial' }),
+        gmaps: 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest) + '&travelmode=driving' };
+    }
+
+    let nearFree = [];
+    if (moving && mapped) {
+      const ref = op.from.zone === zvz.id && op.from.spot ? geom(op.from.spot) : { cx: 0.8, cy: 1 };
+      nearFree = spotIds(zvz).filter(s => !occ[zvz.id + '|' + s] && !(op.from.zone === zvz.id && op.from.spot === s))
+        .map(s => { const g = geom(s); return { s, d: Math.abs(g.cx - ref.cx) + Math.abs(g.cy - ref.cy) }; })
+        .sort((a, b) => a.d - b.d).slice(0, 6)
+        .map(({ s }) => ({ id: s, onClick: () => { this.setState({ spotErr: '' }); this.save({ op: { ...op, to: { zone: zvz.id, spot: s } } }); } }));
+    }
+    const stepIdx = op.phase === 'idle' ? 0 : op.phase === 'selected' ? 1 : moving ? (op.to ? 3 : 2) : 4;
+    const steps = ['Вибір', 'Початок', 'У дорозі', 'Фото', 'Підсумок'].map((label, i) => ({ n: pad(i + 1), label, bg: i === stepIdx ? 'var(--color-accent)' : 'transparent', fg: i === stepIdx ? '#fff' : (i < stepIdx ? 'var(--color-text)' : 'var(--color-neutral-500)') }));
+    const hint = op.phase === 'idle' ? (mapped ? 'Натисніть на авто на карті або знайдіть його за VIN у шапці.' : 'Оберіть авто з онлайн-залишків складу.')
+      : op.phase === 'selected' ? 'Авто вибрано. Маршрут від КПП показано на карті. Почніть операцію в панелі праворуч.'
+      : moving ? (mapped ? 'Натисніть на вільне місце, куди поставили авто. Іншу зону оберіть праворуч.' : 'Натисніть «Відправити авто на цей склад», щоб передати авто.')
+      : 'Операцію завершено. Оберіть наступне авто.';
+    const carVals = car ? { model: car.model, vin: car.vin, color: car.color, keyText: car.key ? keyLabel(car.key) + (moving ? ' · видано' : '') : (car.zone && zmap[car.zone] && zmap[car.zone].ext ? 'у складу-отримувача' : 'немає в ключниці') } : {};
+    const destChips = own.map(z => { const on = (op.to ? op.to.zone : S.zoneView) === z.id; return { id: z.id, free: Math.max(0, z.cap - used(z.id)), title: z.name, bg: on ? 'var(--color-accent)' : 'var(--color-bg)', fg: on ? '#fff' : 'var(--color-text)', onClick: () => this.setDest(z.id) }; });
+    const movingHint = !op.to ? 'Оберіть зону й вільне місце на карті.'
+      : (needPhoto && !op.photo) ? 'Нове місце: ' + locLabel(op.to) + '. Сфотографуйте, як поставили авто, щоб завершити операцію.'
+      : op.to.spot ? 'Нове місце: ' + locLabel(op.to) + '. Перевірте й завершіть операцію.' : 'Авто буде передано: ' + zname(op.to.zone) + '. Місце призначить склад.';
+
+    const kcab = S.keyCab || 1, ks = S.keySel ? byKey[S.keySel] : null;
+    const isOut = c => moving && c && c.id === op.carId;
+    const cabs = Array.from({ length: CABS }, (_, i) => {
+      const cb = i + 1; let n = 0, hit = false;
+      for (let j = 1; j <= 100; j++) { const c = byKey[cb + '-' + j]; if (c) { n++; if (vmatch(c)) hit = true; } }
+      return { name: 'Шафа ' + pad(cb), count: n + ' / 100', bg: cb === kcab ? 'var(--color-accent)' : 'var(--color-bg)', fg: cb === kcab ? '#fff' : 'var(--color-text)', ring: hit ? 'inset 0 0 0 3px var(--color-accent-2-600)' : 'none', onClick: () => this.setState({ keyCab: cb, keySel: null }) };
+    });
+    const kcells = Array.from({ length: 100 }, (_, i) => {
+      const id = kcab + '-' + (i + 1), c = byKey[id], out = isOut(c);
+      let bg = c ? (out ? 'var(--color-accent-2-300)' : 'var(--color-surface)') : 'var(--color-bg)', fg = c ? 'var(--color-text)' : 'var(--color-neutral-400)';
+      if (id === S.keySel) { bg = 'var(--color-accent)'; fg = '#fff'; }
+      return { n: pad(i + 1), label: c ? (out ? 'видано' : c.vin.slice(-6)) : '—', bg, fg, ring: c && vmatch(c) ? 'inset 0 0 0 3px var(--color-text)' : 'none', title: c ? 'Škoda ' + c.model + ' · VIN ' + c.vin : 'Порожня комірка', onClick: () => this.setState({ keySel: id }) };
+    });
+    const nKeys = Object.keys(byKey).length, nOut = car && moving && car.key ? 1 : 0;
+    const keys = { inBox: nKeys - nOut, out: nOut, empty: CABS * 100 - nKeys, cabTitle: 'Шафа ' + pad(kcab), none: !S.keySel, free: !!S.keySel && !ks, has: !!ks, title: keyLabel(S.keySel),
+      car: ks || {}, place: ks ? (ks.zone ? locLabel({ zone: ks.zone, spot: ks.spot }) : 'у дорозі') : '', placeName: ks && ks.zone ? zname(ks.zone) : '', status: ks ? (isOut(ks) ? 'Видано: ' + operator : 'На місці') : '',
+      canShow: !!(ks && ks.zone), show: () => ks && this.goCar(ks) };
+
+    let mobBar = { show: false };
+    if (mob && tab === 'move' && op.phase !== 'idle' && car) {
+      if (op.phase === 'selected') mobBar = { show: true, kicker: 'Škoda ' + car.model + ' · ' + locLabel(op.from), title: route.canDraw ? route.meta : 'Готово до початку', isBtn: true, label: 'Почати', action: this.start };
+      else if (moving && !op.to) mobBar = { show: true, kicker: 'У дорозі · ' + dur(now - op.start), title: 'Вкажіть нове місце', isBtn: false };
+      else if (moving && needPhoto && !op.photo) mobBar = { show: true, kicker: 'Місце ' + locLabel(op.to) + ' · ' + dur(now - op.start), title: 'Сфотографуйте авто', isPhoto: true };
+      else if (moving) mobBar = { show: true, kicker: 'Місце ' + locLabel(op.to) + ' · ' + dur(now - op.start), title: 'Можна завершувати', isBtn: true, label: 'Завершити', action: this.finish };
+      else if (result) mobBar = { show: true, kicker: 'Операція № ' + result.no + ' · ' + result.duration, title: result.from + ' → ' + result.to, isBtn: true, label: 'Нова', action: this.reset };
+    }
+    if (mob && tab === 'keys' && ks) mobBar = { show: true, kicker: keyLabel(S.keySel), title: 'Škoda ' + ks.model + ' · ' + (ks.zone ? locLabel({ zone: ks.zone, spot: ks.spot }) : 'у дорозі'), isBtn: !!ks.zone, label: 'На карті', action: () => this.goCar(ks) };
+    const results = q.length >= 3 ? Object.values(cars).filter(vmatch).slice(0, 8).map(c => ({ vin: c.vin, sub: 'Škoda ' + c.model + ' · ' + (c.zone ? locLabel({ zone: c.zone, spot: c.spot }) + ' · ' + zname(c.zone) : 'у дорозі'), onClick: () => this.pick(c) })) : [];
+
+    const d = S.dialog; let dlg = {};
+    if (d) {
+      const cap = Math.max(0, Math.min(300, Math.floor((+d.area || 0) / M2))), u = d.mode === 'edit' ? used(d.id) : 0;
+      const err = !d.name.trim() ? 'name' : cap < 1 ? 'Площа має бути не меншою за 25 м².' : cap < u ? 'На майданчику ' + u + ' авто, місткість не може бути меншою.' : '';
+      dlg = { title: d.mode === 'create' ? 'Нова зона' : 'Змінити ' + d.id, isCreate: d.mode === 'create', isTemp: d.group === '3.2', isTransit: d.group === '3.3',
+        setTemp: () => this.dset({ group: '3.2' }), setTransit: () => this.dset({ group: '3.3' }), name: d.name, onName: e => this.dset({ name: e.target.value }), area: d.area, onArea: e => this.dset({ area: e.target.value }),
+        pris: PRI.map((label, i) => ({ label, on: d.pri === i, set: () => this.dset({ pri: i }) })), cap, note: M2 + ' м² на авто, не більше 300 місць',
+        hasError: !!err && err !== 'name', error: err, cannotSave: !!err, canDelete: d.mode === 'edit' && u === 0,
+        save: () => this.saveDialog(), close: () => this.setState({ dialog: null }), remove: () => this.removeZone(d.id) };
+    }
+
+    return {
+      tabs: [['zones', 'Зони'], ['move', 'Переміщення'], ['keys', 'Ключі'], ['log', 'Журнал']].map(([id, label]) => ({ label, line: tab === id ? 'var(--color-accent-2)' : 'transparent', onClick: () => this.save({ tab: id }) })),
+      isZones: tab === 'zones', isMove: tab === 'move', isKeys: tab === 'keys', isLog: tab === 'log',
+      clock: hms(now), query, onQuery: e => this.setState({ query: e.target.value }), results, hasResults: results.length > 0, noResults: q.length >= 3 && !results.length,
+      tot, groups, toZones: () => this.save({ tab: 'zones' }),
+      zv, zvMapped: mapped, zvExt: !mapped, isAerial: view === 'aerial', isScheme: view === 'scheme', showAerial: mapped && view === 'aerial', showScheme: mapped && view === 'scheme',
+      setAerial: () => this.save({ view: 'aerial' }), setScheme: () => this.save({ view: 'scheme' }),
+      map, spots, extCars, hint, route, canSendHere: moving && !mapped && !zvz.offline, sendHere: () => this.setDest(zvz.id),
+      steps, operator, onOperator: e => this.save({ operator: e.target.value }),
+      isIdle: op.phase === 'idle', isSelected: op.phase === 'selected', isMoving: moving, isDone: op.phase === 'done', hasCar: op.phase === 'selected' || moving,
+      car: carVals, fromLabel: locLabel(op.from), fromName: op.from ? zname(op.from.zone) : '', toLabel: locLabel(op.to), toName: op.to ? zname(op.to.zone) : (moving ? 'не обрано' : ''),
+      startTime: op.start ? hms(op.start) : '', elapsed: op.start ? dur(now - op.start) : '00:00', destChips, movingHint,
+      showPhoto: moving && !!op.to, hasPhoto: !!op.photo, noPhoto: !op.photo, photo: op.photo || '', photoAt: op.photoAt ? hms(op.photoAt) : '', photoBtn: op.photo ? 'Перезняти фото' : 'Зробити фото', onPhoto: this.onPhoto,
+      cannotFinish: !op.to || (needPhoto && !op.photo),
+      result: result || {}, start: this.start, finish: this.finish, cancel: this.cancel, reset: this.reset,
+      photoEl: op.photo ? img(op.photo, true, () => this.setState({ lightbox: { src: op.photo, caption: 'Фото постановки · ' + locLabel(op.to) + (op.photoAt ? ' · ' + hms(op.photoAt) : '') } })) : null,
+      resultPhotoEl: result && result.photo ? img(result.photo, true, () => this.setState({ lightbox: { src: result.photo, caption: 'Операція № ' + result.no + ' · ' + result.from + ' → ' + result.to + ' · ' + result.end } })) : null,
+      lightboxOpen: !!S.lightbox, lightboxEl: S.lightbox ? bigImg(S.lightbox.src) : null, lightboxCaption: S.lightbox ? S.lightbox.caption : '', closeLightbox: () => this.setState({ lightbox: null }),
+      cabs, kcells, keys, log: log.map(r => ({ ...r, photoEl: r.photo ? img(r.photo, false, () => this.setState({ lightbox: { src: r.photo, caption: 'Операція № ' + r.no + ' · Škoda ' + r.model + ' · ' + r.from + ' → ' + r.to + ' · ' + r.end + ' · ' + r.operator } })) : null })), logCount: log.length,
+      dialogOpen: !!d, dlg,
+      mob, notMob: !mob, wide: (S.w || 1200) >= 1100, padB: mob ? (mobBar.show ? 132 : 64) : 0, keyCols: mob ? 5 : 10, mapRef: this.mapRef, mobBar, nearFree,
+      spotInput: S.spotInput, onSpotInput: e => this.setState({ spotInput: e.target.value.toUpperCase(), spotErr: '' }), applySpot: this.applySpot, hasSpotErr: !!S.spotErr, spotErr: S.spotErr,
+    };
+  }
+}
+</script>
+</body>
+</html>

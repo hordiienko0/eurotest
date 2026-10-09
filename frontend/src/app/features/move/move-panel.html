@@ -110,7 +110,7 @@
           }
           <label class="btn btn-secondary btn-block" style="position:relative;margin-top:0;cursor:pointer">
             {{ a.photoUrl ? 'Перезняти фото' : 'Зробити фото' }}
-            <input class="file-hidden" type="file" accept="image/*" capture="environment" (change)="onPhoto($event)">
+            <input class="file-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" (change)="onPhoto($event)">
           </label>
         </div>
       }

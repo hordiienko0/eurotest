@@ -12,6 +12,9 @@ public class MoveService(AppDb db, IPhotoStorage photos, TimeProvider clock)
 {
     const long MaxPhotoBytes = 10 * 1024 * 1024;
     const int SqliteConstraint = 19;
+    // Raster formats only: SVG is served from our origin and could carry script.
+    static readonly HashSet<string> PhotoTypes = new(StringComparer.OrdinalIgnoreCase)
+        { "image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif" };
 
     DateTime Now => clock.GetUtcNow().UtcDateTime;
 
@@ -73,6 +76,7 @@ public class MoveService(AppDb db, IPhotoStorage photos, TimeProvider clock)
             if (zone.Kind == ZoneKind.External)
             {
                 if (!zone.IsOnline) throw Errors.ZoneOffline();
+                await EnsureExternalHasRoomAsync(zone);
             }
             else
             {
@@ -91,7 +95,7 @@ public class MoveService(AppDb db, IPhotoStorage photos, TimeProvider clock)
 
     public async Task<MoveDto> AttachPhotoAsync(int id, int operatorId, Stream content, string contentType, long length)
     {
-        if (length <= 0 || length > MaxPhotoBytes || !contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        if (length <= 0 || length > MaxPhotoBytes || !PhotoTypes.Contains(contentType))
             throw Errors.PhotoInvalid();
         var m = await LoadActiveAsync(id, operatorId);
         var key = await photos.SaveAsync(content, contentType);
@@ -129,6 +133,7 @@ public class MoveService(AppDb db, IPhotoStorage photos, TimeProvider clock)
         }
         else
         {
+            await EnsureExternalHasRoomAsync(to);
             car.Status = CarStatus.AtExternal;
             car.ZoneId = to.Id;
             car.SpotCode = null;
@@ -165,7 +170,8 @@ public class MoveService(AppDb db, IPhotoStorage photos, TimeProvider clock)
             var spot = fallback ?? m.FromSpot!;
             var valid = ZoneLayout.SpotIds(from.Capacity, from.Rows!.Value, from.PerRow!.Value);
             if (fallback is not null && !valid.Contains(fallback)) throw Errors.SpotNotInZone(from.Code, fallback);
-            if (!valid.Contains(spot) || await IsSpotTakenAsync(from.Id, spot, m.Id))
+            if (!valid.Contains(spot)) throw Errors.OriginGone(spot);
+            if (await IsSpotTakenAsync(from.Id, spot, m.Id))
                 throw fallback is null ? Errors.OriginTaken(spot) : Errors.SpotOccupied(spot);
             car.Status = CarStatus.Parked;
             car.ZoneId = from.Id;
@@ -192,6 +198,11 @@ public class MoveService(AppDb db, IPhotoStorage photos, TimeProvider clock)
         return m;
     }
 
+    async Task EnsureExternalHasRoomAsync(Zone zone)
+    {
+        if (await db.Cars.CountAsync(c => c.ZoneId == zone.Id) >= zone.Capacity) throw Errors.ZoneFull();
+    }
+
     async Task<bool> IsSpotTakenAsync(int zoneId, string spot, int exceptMoveId) =>
         await db.Cars.AnyAsync(c => c.ZoneId == zoneId && c.SpotCode == spot)
         || await db.Moves.AnyAsync(x => x.Id != exceptMoveId && x.State == MoveState.InTransit && x.ToZoneId == zoneId && x.ToSpot == spot);
@@ -203,9 +214,9 @@ public class MoveService(AppDb db, IPhotoStorage photos, TimeProvider clock)
         {
             await db.SaveChangesAsync();
         }
-        catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteErrorCode: SqliteConstraint })
+        catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteErrorCode: SqliteConstraint } se)
         {
-            throw onConflict();
+            throw se.Message.Contains("KeySlotId") ? Errors.KeySlotTaken() : onConflict();
         }
     }
 }

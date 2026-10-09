@@ -94,12 +94,21 @@ public class ZoneService(AppDb db)
                 m.ToSpot = null;
             }
 
-            var taken = cars.Where(c => c.SpotCode != null && validSet.Contains(c.SpotCode)).Select(c => c.SpotCode!)
-                .Concat(reservations.Where(m => m.ToZoneId == zone.Id && m.ToSpot != null).Select(m => m.ToSpot!))
-                .ToHashSet();
-            var free = new Queue<string>(valid.Where(s => !taken.Contains(s)));
+            // Parked cars outrank reservations: a displaced car takes a free spot first, then a reserved one.
+            var byCars = cars.Where(c => c.SpotCode != null && validSet.Contains(c.SpotCode)).Select(c => c.SpotCode!).ToHashSet();
+            var reservedBy = reservations.Where(m => m.ToZoneId == zone.Id && m.ToSpot != null).ToDictionary(m => m.ToSpot!);
+            var free = new Queue<string>(valid.Where(s => !byCars.Contains(s) && !reservedBy.ContainsKey(s))
+                .Concat(valid.Where(reservedBy.ContainsKey)));
             foreach (var car in cars.Where(c => c.SpotCode == null || !validSet.Contains(c.SpotCode)))
-                car.SpotCode = free.TryDequeue(out var spot) ? spot : throw Errors.CapacityBelowOccupancy(cars.Count);
+            {
+                var spot = free.TryDequeue(out var s) ? s : throw Errors.CapacityBelowOccupancy(cars.Count);
+                if (reservedBy.Remove(spot, out var bumped))
+                {
+                    bumped.ToZoneId = null;
+                    bumped.ToSpot = null;
+                }
+                car.SpotCode = spot;
+            }
         }
 
         await db.SaveChangesAsync();

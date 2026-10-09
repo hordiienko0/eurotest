@@ -20,7 +20,10 @@ public static class Errors
     public static DomainException SpotIsOrigin() => new("SpotIsOrigin", "Це початкове місце авто.");
     public static DomainException SpotOccupied(string spot) => new("SpotOccupied", $"Місце {spot} зайняте.", 409);
     public static DomainException OriginTaken(string spot) => new("OriginTaken", $"Початкове місце {spot} вже зайняте. Оберіть інше місце для повернення.", 409);
-    public static DomainException ZoneOffline() => new("ZoneOffline", "Склад зараз не на зв’язку.", 409);
+    public static DomainException OriginGone(string spot) => new("OriginTaken", $"Початкового місця {spot} більше немає — зону зменшили. Оберіть інше місце для повернення.", 409);
+    public static DomainException ZoneFull() => new("ZoneFull", "Склад заповнений, вільних місць немає.", 409);
+    public static DomainException KeySlotTaken() => new("KeySlotTaken", "Комірку ключниці щойно зайняли. Спробуйте ще раз.", 409);
+    public static DomainException ZoneOffline()=> new("ZoneOffline", "Склад зараз не на зв’язку.", 409);
     public static DomainException TargetRequired() => new("TargetRequired", "Оберіть зону й місце призначення.");
     public static DomainException PhotoRequired() => new("PhotoRequired", "Сфотографуйте авто на новому місці.");
     public static DomainException PhotoInvalid() => new("PhotoInvalid", "Потрібне зображення до 10 МБ.");

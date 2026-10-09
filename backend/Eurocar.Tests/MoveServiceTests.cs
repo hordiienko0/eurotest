@@ -215,6 +215,31 @@ public class MoveServiceTests : IDisposable
         Assert.Equal("B1", Saved(_car1).SpotCode);
     }
 
+    [Fact]
+    public async Task Full_external_warehouse_cannot_be_targeted()
+    {
+        _t.Db.Zones.Single(z => z.Code == "P01").Capacity = 1; _t.Db.SaveChanges(); // car3 already there
+        var m = await _svc.StartAsync(_car1, Op1);
+        Assert.Equal("ZoneFull", await CodeOf(() => _svc.SetTargetAsync(m.Id, Op1, new SetTargetDto("P01", null))));
+    }
+
+    [Fact]
+    public async Task Svg_photo_is_rejected()
+    {
+        var m = await _svc.StartAsync(_car1, Op1);
+        Assert.Equal("PhotoInvalid", await CodeOf(() => _svc.AttachPhotoAsync(m.Id, Op1, new MemoryStream([1]), "image/svg+xml", 1)));
+    }
+
+    [Fact]
+    public async Task Cancel_to_removed_origin_spot_says_spot_is_gone_not_taken()
+    {
+        var m = await _svc.StartAsync(_car2, Op1);   // origin A2
+        _t.Db.Zones.Single(z => z.Code == "S1").Capacity = 1; _t.Db.SaveChanges(); // only A1 left
+        var ex = await Assert.ThrowsAsync<DomainException>(() => _svc.CancelAsync(m.Id, Op1, null));
+        Assert.Equal("OriginTaken", ex.Code);                // client still offers the fallback picker
+        Assert.Contains("більше немає", ex.Message);
+    }
+
     sealed class FakePhotos : IPhotoStorage
     {
         public Task<string> SaveAsync(Stream content, string contentType, CancellationToken ct = default) => Task.FromResult(Guid.NewGuid().ToString("N"));

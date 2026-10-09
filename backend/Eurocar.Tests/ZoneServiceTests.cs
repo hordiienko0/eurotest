@@ -61,6 +61,28 @@ public class ZoneServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Shrinking_gives_displaced_car_a_reserved_spot_instead_of_failing()
+    {
+        var created = await _svc.CreateAsync(new ZoneUpsertDto("3.2", "Тест", 1000, Priority.Normal));
+        var db = _t.Db;
+        var zone = db.Zones.Single(z => z.Code == created.Code);
+        var lastSpot = ZoneLayout.SpotIds(zone.Capacity, zone.Rows!.Value, zone.PerRow!.Value).Last();
+        var parked = new Car { Vin = "TMBSHRINK00000001", Model = "Octavia", Color = "білий", ZoneId = zone.Id, SpotCode = lastSpot, Status = CarStatus.Parked };
+        var moving = new Car { Vin = "TMBSHRINK00000002", Model = "Octavia", Color = "білий", Status = CarStatus.InTransit };
+        db.Cars.AddRange(parked, moving);
+        db.SaveChanges();
+        db.Moves.Add(new Move { CarId = moving.Id, OperatorId = db.Operators.First().Id, FromZoneId = zone.Id, FromSpot = "B1",
+            State = MoveState.InTransit, StartedAt = DateTime.UtcNow, ToZoneId = zone.Id, ToSpot = "A1" });
+        db.SaveChanges();
+
+        await _svc.UpdateAsync(created.Code, new ZoneUpsertDto("3.2", "Тест", 25, Priority.Normal));
+
+        using var check = _t.NewContext();
+        Assert.Equal("A1", check.Cars.Single(c => c.Id == parked.Id).SpotCode);
+        Assert.Null(check.Moves.Single(m => m.CarId == moving.Id).ToSpot);
+    }
+
+    [Fact]
     public async Task Shrinking_below_occupancy_is_rejected()
         => Assert.Equal("CapacityBelowOccupancy", await CodeOf(() => _svc.UpdateAsync("T1", new ZoneUpsertDto("3.2", "Майданчик-1", 25, Priority.Normal))));
 

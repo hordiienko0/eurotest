@@ -1,7 +1,8 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { Api } from '../../core/api';
 import { Clock } from '../../core/clock';
+import { MobileBar, MobileBarStore } from '../../core/mobile-bar';
 import { errorCode } from '../../core/errors';
 import { Car, ZoneDetail, ZoneRow, ZonesOverview } from '../../core/models';
 import { MoveStore } from '../../core/move-store';
@@ -10,16 +11,17 @@ import { pollEvery } from '../../core/poll';
 import { SearchStore } from '../../core/search';
 import { SettingsStore } from '../../core/settings';
 import { Viewport } from '../../core/viewport';
-import { CAR_COLOR, ago, locLabel, vinTail } from '../../shared/format';
-import { Pt, canvasSize, geom, pathBetween, pathFromGate, pathLength } from '../../shared/zone-layout';
-import { RouteVm, SpotVm } from './view-models';
+import { CAR_COLOR, ago, dur, locLabel, moveDuration, vinTail } from '../../shared/format';
+import { GATE, Pt, canvasSize, geom, nearestFree, pathBetween, pathFromGate, pathLength } from '../../shared/zone-layout';
+import { MovePanel } from './move-panel';
+import { DestChip, RouteVm, SpotVm } from './view-models';
 import { ZoneMapAerial } from './zone-map-aerial';
 import { ZoneMapScheme } from './zone-map-scheme';
 
 type View = 'aerial' | 'scheme';
 
 /** Prototype lines 91–336 (markup) and 769–844 (values). */
-@Component({ selector: 'app-move-page', imports: [ZoneMapAerial, ZoneMapScheme], templateUrl: './move-page.html' })
+@Component({ selector: 'app-move-page', imports: [ZoneMapAerial, ZoneMapScheme, MovePanel], templateUrl: './move-page.html' })
 export class MovePage {
   readonly zone = input.required<string>();
 
@@ -31,6 +33,7 @@ export class MovePage {
   protected readonly store = inject(MoveStore);
   protected readonly search = inject(SearchStore);
   protected readonly vp = inject(Viewport);
+  private readonly mobileBar = inject(MobileBarStore);
 
   protected readonly detail = signal<ZoneDetail | null>(null);
   protected readonly overview = signal<ZonesOverview | null>(null);
@@ -49,6 +52,8 @@ export class MovePage {
       });
     });
     pollEvery(10_000, () => this.load(this.zone()));
+    effect(() => this.mobileBar.bar.set(this.mobBar()));
+    inject(DestroyRef).onDestroy(() => this.mobileBar.bar.set(null));
   }
 
   private async load(code: string) {
@@ -200,4 +205,38 @@ export class MovePage {
     else if (this.store.to()) await this.store.setTarget(null);
     if (code !== this.zone()) this.router.navigate(['/move', code]);
   }
+
+  protected readonly nearFree = computed(() => {
+    const d = this.detail();
+    if (!this.moving() || !d || d.kind !== 'Mapped') return [];
+    const from = this.store.from();
+    const fromHere = from?.zoneCode === d.code ? from.spotCode : null;
+    const taken = new Set(d.spots.filter(s => s.car || s.reserved).map(s => s.code));
+    return nearestFree(d.spots.map(s => s.code), s => !taken.has(s) && s !== fromHere, fromHere ? geom(fromHere) : GATE);
+  });
+
+  protected readonly destChips = computed<DestChip[]>(() => {
+    const selected = this.store.to()?.zoneCode ?? this.zone();
+    return [...this.zonesByCode().values()]
+      .filter(z => z.kind === 'Mapped')
+      .map(z => ({ code: z.code, name: z.name, free: Math.max(0, z.capacity - z.used), on: z.code === selected }));
+  });
+
+  /** Prototype lines 863–870. */
+  protected readonly mobBar = computed<MobileBar | null>(() => {
+    const phase = this.store.phase(), car = this.store.car();
+    if (!this.vp.mob() || phase === 'idle' || !car) return null;
+    const a = this.store.active(), r = this.store.result(), to = this.store.to();
+    const elapsed = a ? dur(this.clock.now() - Date.parse(a.startedAt)) : '';
+    if (phase === 'selected') {
+      const route = this.route();
+      return { kicker: `Škoda ${car.model} · ${locLabel(this.store.from())}`, title: route?.canDraw ? route.meta : 'Готово до початку', kind: 'btn', label: 'Почати', action: () => this.store.start() };
+    }
+    if (phase === 'moving' && !to) return { kicker: 'У дорозі · ' + elapsed, title: 'Вкажіть нове місце', kind: 'text' };
+    if (phase === 'moving' && this.settings.value().requirePhoto && !a?.photoUrl)
+      return { kicker: `Місце ${locLabel(to)} · ${elapsed}`, title: 'Сфотографуйте авто', kind: 'photo', onFile: f => this.store.photo(f) };
+    if (phase === 'moving') return { kicker: `Місце ${locLabel(to)} · ${elapsed}`, title: 'Можна завершувати', kind: 'btn', label: 'Завершити', action: () => this.store.finish() };
+    if (r) return { kicker: `Операція № ${r.no} · ${moveDuration(r)}`, title: `${locLabel(r.from)} → ${locLabel(r.to)}`, kind: 'btn', label: 'Нова', action: () => this.store.reset() };
+    return null;
+  });
 }

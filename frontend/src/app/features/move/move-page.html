@@ -76,5 +76,7 @@
       <div style="font-size:15px">Завантаження…</div>
     }
   </section>
-  <aside></aside>
+  <aside>
+    <app-move-panel [zone]="detail()" [nearFree]="nearFree()" [destChips]="destChips()" (destSelected)="setDest($event)" />
+  </aside>
 </main>

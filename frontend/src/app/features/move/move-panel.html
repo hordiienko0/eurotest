@@ -1,0 +1,164 @@
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-bottom:2px solid var(--color-text)">
+  @for (s of steps(); track s.n) {
+    <div style="padding:var(--space-3);border-right:1px solid var(--color-divider)" [style.background]="s.bg" [style.color]="s.fg">
+      <div style="font-size:18px;font-weight:800">{{ s.n }}</div>
+      <div style="font-size:12px;font-weight:600">{{ s.label }}</div>
+    </div>
+  }
+</div>
+
+<div style="padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6);flex:1">
+  <div class="field" style="margin:0">
+    <label>Оператор</label>
+    <select class="input input-lg" style="width:100%" [disabled]="store.phase() === 'moving'" (change)="changeOperator(+val($event))">
+      @for (o of ops.list(); track o.id) {
+        <option [value]="o.id" [selected]="o.id === ops.id()">{{ o.displayName }}</option>
+      }
+    </select>
+  </div>
+
+  @if (store.phase() === 'idle') {
+    <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+      <div style="font-size:32px;font-weight:800;line-height:1.05;letter-spacing:-0.02em">Оберіть автомобіль</div>
+      <div style="font-size:15px;color:var(--color-neutral-700)">На карті зони, у списку складу або через пошук за VIN.</div>
+    </div>
+  }
+
+  @if (showCar()) {
+    @if (store.car(); as car) {
+      <div style="border-top:2px solid var(--color-text);padding-top:var(--space-4);display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+        <div style="grid-column:1/-1">
+          <div class="kicker">Автомобіль</div>
+          <div style="font-size:32px;font-weight:800;letter-spacing:-0.01em">Škoda {{ car.model }}</div>
+          <div style="font-size:14px;letter-spacing:0.04em">VIN {{ car.vin }} · {{ car.color }}</div>
+          <div style="margin-top:var(--space-2);display:flex;gap:var(--space-2);align-items:baseline;font-size:14px"><span class="tag tag-accent-2">Ключ</span><b>{{ keyText() }}</b></div>
+        </div>
+        <div>
+          <div class="kicker muted">Звідки</div>
+          <div style="font-size:28px;font-weight:800">{{ locLabel(store.from()) }}</div>
+          <div style="font-size:13px">{{ store.from()?.zoneName }}</div>
+        </div>
+        <div>
+          <div class="kicker muted">Куди</div>
+          <div style="font-size:28px;font-weight:800;color:var(--color-accent-2-700)">{{ locLabel(store.to()) }}</div>
+          <div style="font-size:13px">{{ toName() }}</div>
+        </div>
+      </div>
+    }
+  }
+
+  @if (store.phase() === 'selected') {
+    <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+      <button class="btn btn-primary btn-block" [disabled]="store.busy()" (click)="store.start()">Почати переміщення</button>
+      <button class="btn btn-ghost btn-block" (click)="store.reset()">Скасувати вибір</button>
+    </div>
+  }
+
+  @if (store.active(); as a) {
+    <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+      <div style="border:2px solid var(--color-accent-2-600);padding:var(--space-4)">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-2-800)">У дорозі · початок {{ hms(a.startedAt) }}</div>
+        <div class="tnum" style="font-size:56px;font-weight:800;line-height:1">{{ elapsed() }}</div>
+      </div>
+
+      <div class="field" style="margin:0">
+        <label>Зона призначення</label>
+        <div class="cells" style="grid-template-columns:repeat(auto-fill,minmax(64px,1fr))">
+          @for (d of destChips(); track d.code) {
+            <div role="button" tabindex="0" style="cursor:pointer;padding:6px 8px" [title]="d.name"
+              [style.background]="d.on ? 'var(--color-accent)' : 'var(--color-bg)'" [style.color]="d.on ? '#fff' : 'var(--color-text)'"
+              (click)="destSelected.emit(d.code)" (keydown.enter)="destSelected.emit(d.code)">
+              <div style="font-size:15px;font-weight:800">{{ d.code }}</div>
+              <div style="font-size:11px">вільн. {{ d.free }}</div>
+            </div>
+          }
+        </div>
+        <button class="btn btn-ghost" style="margin-top:var(--space-2)" (click)="toZones()">Зовнішній склад або дилер →</button>
+      </div>
+
+      @if (zoneMapped()) {
+        <div class="field" style="margin:0">
+          <label>Номер місця в зоні {{ zone()?.code }}</label>
+          <div style="display:flex;gap:var(--space-2)">
+            <input class="input input-lg" placeholder="напр. D7" style="flex:1;min-width:0;text-transform:uppercase"
+              [value]="spotInput()" (input)="spotInput.set(val($event).toUpperCase()); spotErr.set('')" (keydown.enter)="applySpot()">
+            <button class="btn btn-secondary" style="min-height:44px" (click)="applySpot()">Вказати</button>
+          </div>
+          @if (spotErr()) {
+            <div class="err" style="margin-top:4px">{{ spotErr() }}</div>
+          }
+          <div style="font-size:12px;margin-top:var(--space-3);color:var(--color-neutral-700)">Найближчі вільні</div>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:4px">
+            @for (f of nearFree(); track f) {
+              <button class="btn btn-secondary" style="min-height:44px;min-width:56px" (click)="pickNear(f)">{{ f }}</button>
+            }
+          </div>
+        </div>
+      }
+
+      <div style="font-size:15px">{{ movingHint() }}</div>
+
+      @if (store.to()) {
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);border-top:2px solid var(--color-text);padding-top:var(--space-4)">
+          <div class="kicker">Фото постановки</div>
+          @if (a.photoUrl) {
+            <img [src]="a.photoUrl" alt="Фото постановки авто" title="Натисніть, щоб збільшити" (click)="openPhoto(a.photoUrl, photoCaption(a))"
+              style="width:100%;height:220px;object-fit:cover;display:block;border:2px solid var(--color-text);box-sizing:border-box;cursor:zoom-in">
+            <div style="font-size:13px;color:var(--color-neutral-700)">Знято о {{ hms(a.photoTakenAt!) }}</div>
+          } @else {
+            <div style="font-size:14px;color:var(--color-neutral-700)">Сфотографуйте авто на новому місці так, щоб було видно розмітку й номер місця.</div>
+          }
+          <label class="btn btn-secondary btn-block" style="position:relative;margin-top:0;cursor:pointer">
+            {{ a.photoUrl ? 'Перезняти фото' : 'Зробити фото' }}
+            <input class="file-hidden" type="file" accept="image/*" capture="environment" (change)="onPhoto($event)">
+          </label>
+        </div>
+      }
+
+      <button class="btn btn-primary btn-block" (click)="finish()" [disabled]="cannotFinish()">Завершити операцію</button>
+
+      @if (store.originTaken()) {
+        <div style="display:flex;flex-direction:column;gap:var(--space-2);border:2px solid var(--color-accent-2-600);padding:var(--space-3)">
+          <div style="font-size:14px">Початкове місце {{ locLabel(store.from()) }} вже зайняте. Вкажіть інше місце в зоні {{ store.from()?.zoneCode }} для повернення.</div>
+          <div style="display:flex;gap:var(--space-2)">
+            <input class="input input-lg" placeholder="напр. D7" style="flex:1;min-width:0;text-transform:uppercase"
+              [value]="cancelSpot()" (input)="cancelSpot.set(val($event).toUpperCase()); cancelErr.set('')">
+            <button class="btn btn-secondary" style="min-height:44px" (click)="cancel(cancelSpot())">Повернути</button>
+          </div>
+          @if (cancelErr()) {
+            <div class="err">{{ cancelErr() }}</div>
+          }
+        </div>
+      } @else {
+        <button class="btn btn-ghost btn-block" (click)="cancel()">Скасувати: повернути на {{ locLabel(store.from()) }}</button>
+      }
+    </div>
+  }
+
+  @if (store.phase() === 'done') {
+    @if (store.result(); as r) {
+      <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+        <div style="background:var(--color-accent);color:#fff;padding:var(--space-4)">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-accent-2)">Результат · операція № {{ r.no }}</div>
+          <div style="font-size:30px;font-weight:800;line-height:1.1">{{ locLabel(r.from) }} → {{ locLabel(r.to) }}</div>
+          <div style="font-size:14px;margin-top:4px">Škoda {{ r.car.model }} · VIN …{{ vinTail(r.car.vin) }}</div>
+        </div>
+        @if (r.photoUrl) {
+          <img [src]="r.photoUrl" alt="Фото постановки авто" title="Натисніть, щоб збільшити" (click)="openPhoto(r.photoUrl, resultCaption(r))"
+            style="width:100%;height:220px;object-fit:cover;display:block;border:2px solid var(--color-text);box-sizing:border-box;cursor:zoom-in">
+        }
+        <div class="stats" style="grid-template-columns:1fr 1fr 1fr">
+          <div><div style="font-size:12px;color:var(--color-neutral-600)">Початок</div><div style="font-size:20px;font-weight:700">{{ hms(r.startedAt) }}</div></div>
+          <div><div style="font-size:12px;color:var(--color-neutral-600)">Кінець</div><div style="font-size:20px;font-weight:700">{{ hms(r.completedAt!) }}</div></div>
+          <div><div style="font-size:12px;color:var(--color-neutral-600)">Час</div><div style="font-size:20px;font-weight:700">{{ moveDuration(r) }}</div></div>
+        </div>
+        <div style="font-size:14px;color:var(--color-neutral-700);display:flex;flex-direction:column;gap:4px">
+          <div>{{ r.from.zoneName }} → {{ r.to?.zoneName }}</div>
+          <div>Ключ: {{ r.keyLabel }}</div>
+          <div>Оператор: {{ r.operatorName }}</div>
+        </div>
+        <button class="btn btn-primary btn-block" (click)="store.reset()">Нова операція</button>
+      </div>
+    }
+  }
+</div>

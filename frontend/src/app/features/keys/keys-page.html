@@ -1,0 +1,79 @@
+<main class="split">
+  <section>
+    <div>
+      <div class="kicker">Спільна ключниця · 12 шаф по 100 комірок</div>
+      <div style="font-size:15px;margin-top:4px">Оберіть шафу й комірку. Пошук за VIN у шапці одразу відкриє потрібну комірку.</div>
+    </div>
+    <div class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div><div style="font-size:28px;font-weight:800">{{ summary()?.inBox ?? '—' }}</div><div style="font-size:13px">ключів на місці</div></div>
+      <div><div style="font-size:28px;font-weight:800">{{ summary()?.issued ?? '—' }}</div><div style="font-size:13px">видано</div></div>
+      <div><div style="font-size:28px;font-weight:800">{{ summary()?.empty ?? '—' }}</div><div style="font-size:13px">порожніх комірок</div></div>
+    </div>
+    <div class="cells" style="grid-template-columns:repeat(auto-fill,minmax(96px,1fr))">
+      @for (cb of cabs(); track cb.cb) {
+        <div role="button" tabindex="0" style="cursor:pointer;padding:var(--space-2) var(--space-3)"
+          [style.background]="cb.bg" [style.color]="cb.fg" [style.box-shadow]="cb.ring" (click)="selectCab(cb.cb)" (keydown.enter)="selectCab(cb.cb)">
+          <div style="font-size:14px;font-weight:800">{{ cb.name }}</div>
+          <div class="tnum" style="font-size:12px">{{ cb.count }}</div>
+        </div>
+      }
+    </div>
+    <div style="border:2px solid var(--color-text)">
+      <div style="padding:var(--space-2) var(--space-3);border-bottom:2px solid var(--color-text);background:var(--color-accent);color:#fff;font-weight:800">Шафа {{ pad(cab()) }}</div>
+      <div style="display:grid;gap:2px;background:var(--color-neutral-300)" [style.grid-template-columns]="'repeat(' + (vp.mob() ? 5 : 10) + ',minmax(0,1fr))'">
+        @for (k of kcells(); track k.number) {
+          <button type="button" class="cell" style="aspect-ratio:1/0.8;padding:4px" [title]="k.title"
+            [style.background]="k.bg" [style.color]="k.fg" [style.box-shadow]="k.ring" (click)="selectCell(k.number)">
+            <span class="cell-n">{{ k.n }}</span>
+            <span class="cell-l">{{ k.label }}</span>
+          </button>
+        }
+      </div>
+    </div>
+    <div class="legend">
+      <div><span class="sw" style="background:var(--color-surface);border:1px solid var(--color-neutral-400)"></span>Ключ на місці</div>
+      <div><span class="sw" style="background:var(--color-accent-2-300)"></span>Видано</div>
+      <div><span class="sw" style="background:var(--color-bg);border:1px solid var(--color-neutral-400)"></span>Порожньо</div>
+    </div>
+  </section>
+
+  <aside style="flex:1 1 340px;padding:var(--space-6);gap:var(--space-6)">
+    @if (!sel()) {
+      <div style="font-size:32px;font-weight:800;line-height:1.05;letter-spacing:-0.02em">Оберіть комірку в ключниці</div>
+    } @else {
+      @if (selCar(); as car) {
+        <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div>
+            <div class="kicker">Комірка</div>
+            <div style="font-size:28px;font-weight:800">{{ keyLabel(cab(), sel()) }}</div>
+          </div>
+          <div style="border-top:2px solid var(--color-text);padding-top:var(--space-4)">
+            <div class="kicker">Автомобіль</div>
+            <div style="font-size:32px;font-weight:800">Škoda {{ car.model }}</div>
+            <div style="font-size:14px;letter-spacing:0.04em">VIN {{ car.vin }} · {{ car.color }}</div>
+          </div>
+          <div class="stats" style="grid-template-columns:1fr 1fr">
+            <div>
+              <div style="font-size:12px;color:var(--color-neutral-600)">Де стоїть</div>
+              <div style="font-size:22px;font-weight:800">{{ car.zoneCode ? locLabel(car) : 'у дорозі' }}</div>
+              <div style="font-size:12px">{{ car.zoneName }}</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--color-neutral-600)">Статус ключа</div>
+              <div style="font-size:18px;font-weight:700">{{ selCell()?.status === 'Issued' ? 'Видано' : 'На місці' }}</div>
+            </div>
+          </div>
+          @if (car.zoneCode) {
+            <button class="btn btn-primary btn-block" (click)="showOnMap(car)">Показати авто на карті</button>
+          }
+        </div>
+      } @else {
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <div class="kicker">Комірка</div>
+          <div style="font-size:28px;font-weight:800">{{ keyLabel(cab(), sel()) }}</div>
+          <div style="font-size:15px">Комірка порожня.</div>
+        </div>
+      }
+    }
+  </aside>
+</main>

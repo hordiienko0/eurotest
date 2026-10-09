@@ -18,4 +18,12 @@ public static class DbBootstrap
             db.SaveChanges();
         }
     }
+
+    public static void Reset(AppDb db, TimeProvider clock, IPhotoStorage photos)
+    {
+        db.Database.EnsureDeleted();
+        db.Database.EnsureCreated();
+        photos.Clear();
+        DemoSeeder.Seed(db, clock.GetUtcNow().UtcDateTime);
+    }
 }

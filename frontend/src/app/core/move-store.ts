@@ -43,6 +43,7 @@ export class MoveStore {
     if (this.active()) { this.notify.show('Спершу завершіть або скасуйте поточну операцію.'); return false; }
     if (!car.zoneCode) { this.notify.show('Авто зараз у дорозі.'); return false; }
     this.result.set(null);
+    this.originTaken.set(false);
     this.selected.set(car);
     return true;
   }
@@ -57,7 +58,7 @@ export class MoveStore {
     const car = this.selected();
     if (!car) return;
     const { value } = await this.run(() => this.api.startMove(car.id));
-    if (value) { this.active.set(value); this.selected.set(null); }
+    if (value) { this.active.set(value); this.selected.set(null); this.originTaken.set(false); }
   }
 
   /** Returns an error message for inline display, or null on success. */
@@ -80,7 +81,7 @@ export class MoveStore {
     const a = this.active();
     if (!a) return;
     const { value } = await this.run(() => this.api.completeMove(a.id));
-    if (value) { this.active.set(null); this.result.set(value); }
+    if (value) { this.active.set(null); this.result.set(value); this.originTaken.set(false); }
   }
 
   /** Returns an error message, or null on success. OriginTaken switches the panel to "choose a return spot". */
@@ -101,7 +102,7 @@ export class MoveStore {
     } catch (error) {
       if (!quiet) this.notify.error(error);
       // The move changed elsewhere (finished, cancelled, other device): resync.
-      if (['Conflict', 'NotFound', 'NotYourMove'].includes(errorCode(error) ?? '')) void this.resume();
+      if (['Conflict', 'NotFound', 'NotYourMove', 'ActiveMoveExists'].includes(errorCode(error) ?? '')) void this.resume();
       return { error };
     } finally {
       this.busy.set(false);

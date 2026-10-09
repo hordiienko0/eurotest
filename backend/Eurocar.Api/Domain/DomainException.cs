@@ -13,6 +13,7 @@ public static class Errors
     public static DomainException Validation(string message) => new("Validation", message);
     public static DomainException OperatorRequired() => new("OperatorRequired", "Оберіть оператора.");
     public static DomainException CarBusy() => new("CarBusy", "Авто вже в дорозі.", 409);
+    public static DomainException ActiveMoveExists() => new("ActiveMoveExists", "У вас уже є незавершене переміщення. Завершіть або скасуйте його.", 409);
     public static DomainException NotYourMove() => new("NotYourMove", "Цю операцію почав інший оператор.", 403);
     public static DomainException SpotRequired() => new("SpotRequired", "Вкажіть номер місця.");
     public static DomainException SpotNotInZone(string zone, string spot) => new("SpotNotInZone", $"У зоні {zone} немає місця {spot}.");

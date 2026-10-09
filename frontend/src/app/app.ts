@@ -44,7 +44,9 @@ export class App {
   constructor() {
     const operators = inject(OperatorStore);
     inject(SettingsStore).load();
-    operators.load().then(() => this.moves.resume()).catch(() => {});
+    // resume() must not depend on the operator list loading: a failed load would hide an active move.
+    operators.load().catch(() => {});
+    void this.moves.resume();
   }
 
   protected sub(c: Car) {

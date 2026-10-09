@@ -39,6 +39,7 @@ public class MoveService(AppDb db, IPhotoStorage photos, TimeProvider clock)
     public async Task<MoveDto> StartAsync(int carId, int operatorId)
     {
         if (!await db.Operators.AnyAsync(o => o.Id == operatorId && o.IsActive)) throw Errors.OperatorRequired();
+        if (await db.Moves.AnyAsync(m => m.OperatorId == operatorId && m.State == MoveState.InTransit)) throw Errors.ActiveMoveExists();
         var car = await db.Cars.Include(c => c.KeySlot).FirstOrDefaultAsync(c => c.Id == carId) ?? throw Errors.NotFound("Авто");
         if (car.Status == CarStatus.InTransit || car.ZoneId is null) throw Errors.CarBusy();
 

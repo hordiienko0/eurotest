@@ -71,6 +71,13 @@ public class MoveServiceTests : IDisposable
         Assert.Equal("CarBusy", await CodeOf(() => _svc.StartAsync(_car1, Op2)));
     }
 
+    [Fact]
+    public async Task Operator_cannot_start_second_move_while_one_is_in_transit()
+    {
+        await _svc.StartAsync(_car1, Op1);
+        Assert.Equal("ActiveMoveExists", await CodeOf(() => _svc.StartAsync(_car2, Op1)));
+    }
+
     [Theory]
     [InlineData("A2", "SpotOccupied")]
     [InlineData("A1", "SpotIsOrigin")]

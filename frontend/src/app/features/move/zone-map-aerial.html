@@ -1,0 +1,41 @@
+<div #box style="overflow-x:auto;border:2px solid var(--color-text)">
+  <div style="position:relative;width:100%;background:var(--color-neutral-800);overflow:hidden" [style.min-width.px]="map().minW" [style.aspect-ratio]="map().aspect">
+    <div style="position:absolute;left:0;top:0;right:0;background:var(--color-neutral-300);border-bottom:2px solid var(--color-neutral-100)" [style.height.%]="map().stripH"></div>
+    <div style="position:absolute;left:0;top:0;background:var(--color-neutral-800);display:flex;align-items:center;justify-content:center;text-align:center;color:var(--color-neutral-100);font-size:8px;font-weight:800;line-height:1.2" [style.width.%]="map().gateW" [style.height.%]="map().stripH">В’ЇЗД ↓</div>
+    <div style="position:absolute;top:0;display:flex;align-items:center;font-size:11px;font-weight:800;letter-spacing:0.12em;color:var(--color-neutral-800)" [style.left.%]="map().stripL" [style.height.%]="map().stripH">{{ strip() }}</div>
+    <div style="position:absolute;border-top:2px dashed var(--color-neutral-500)" [style.left.%]="map().gateW" [style.right.%]="map().gateW" [style.top.%]="map().topDash"></div>
+    <div style="position:absolute;border-top:2px dashed var(--color-neutral-500)" [style.left.%]="map().gateW" [style.right.%]="map().gateW" [style.top.%]="map().botDash"></div>
+    @for (a of map().aisles; track $index) {
+      <div style="position:absolute;text-align:center;color:var(--color-neutral-500);font-size:16px;font-weight:800" [style.left.%]="a.l" [style.top.%]="map().arrowT" [style.width.%]="map().gateW">{{ a.arrow }}</div>
+    }
+    @for (s of placed(); track s.code) {
+      <button type="button" [title]="s.title" (click)="spotClick.emit(s)"
+        style="all:unset;position:absolute;box-sizing:border-box;border-top:1px solid var(--color-neutral-300);border-bottom:1px solid var(--color-neutral-300);display:flex;align-items:center;justify-content:space-between;padding:0 3px"
+        [style.left.%]="s.l" [style.top.%]="s.t" [style.width.%]="map().spotW" [style.height.%]="map().spotH"
+        [style.background]="s.spotBg" [style.box-shadow]="s.ring" [style.cursor]="s.clickable ? 'pointer' : 'default'" [style.flex-direction]="s.dir">
+        @if (s.car) {
+          <div style="width:64%;flex-shrink:0;height:68%;outline:1px solid var(--color-neutral-900);display:flex;align-items:stretch" [style.background]="s.carBg" [style.flex-direction]="s.dir">
+            <div style="flex:0 0 18%"></div>
+            <div style="flex:0 0 14%;background:var(--color-neutral-900);opacity:0.7;margin:8% 0"></div>
+            <div style="flex:1 1 auto"></div>
+            <div style="flex:0 0 9%;background:var(--color-neutral-900);opacity:0.55;margin:12% 0"></div>
+            <div style="flex:0 0 10%"></div>
+          </div>
+        } @else {
+          <div style="width:64%;flex-shrink:0;font-size:8px;font-weight:800;letter-spacing:0.04em" [style.color]="s.fg">{{ s.tag }}</div>
+        }
+        <span style="font-size:8px;font-weight:700;color:var(--color-neutral-300)">{{ s.code }}</span>
+      </button>
+    }
+    @if (route(); as r) {
+      @if (r.draw) {
+        <svg [attr.viewBox]="map().viewBox" preserveAspectRatio="none" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none">
+          <polyline [attr.points]="r.points" style="fill:none;stroke:var(--color-accent-2);stroke-width:4px;stroke-dasharray:10 6;stroke-linejoin:round;vector-effect:non-scaling-stroke"></polyline>
+        </svg>
+        <div style="position:absolute;transform:translate(-50%,-50%);width:12px;height:12px;background:var(--color-accent-2);border:2px solid var(--color-accent);pointer-events:none" [style.left.%]="r.sx" [style.top.%]="r.sy"></div>
+        <div style="position:absolute;transform:translate(10px,-50%);background:var(--color-accent);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;white-space:nowrap;pointer-events:none" [style.left.%]="r.sx" [style.top.%]="r.sy">{{ r.startLabel }}</div>
+        <div style="position:absolute;transform:translate(-50%,-50%);width:18px;height:18px;border:3px solid var(--color-accent-2);pointer-events:none" [style.left.%]="r.ex" [style.top.%]="r.ey"></div>
+      }
+    }
+  </div>
+</div>
